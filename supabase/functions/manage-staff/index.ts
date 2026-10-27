@@ -52,17 +52,21 @@ Deno.serve(async req=>{
        weekly_target:weekly===""||weekly===null||weekly===undefined?null:Number(weekly)
      }).select("id").single();
      if(ins.error){await admin.auth.admin.deleteUser(made.data.user.id);return reply(400,{error:"No se pudo registrar el empleado: "+ins.error.message},cors);}
+     await admin.from("admin_audit").insert({action:"staff_create",actor_staff_id:owner.data.id,target_staff_id:ins.data.id,
+     subject_id:ins.data.id,after_data:{employee_code:code,role:"employee",weekly_target:weekly},reason:"Alta de personal"});
      return reply(200,{ok:true,code,password,note:"Entrega la contraseña por un canal privado. Solo se muestra ahora."},cors);
    }
    if(action==="reset"||action==="toggle"){
      const id=str(body.staffId);
      if(!/^[0-9a-f-]{36}$/i.test(id))return reply(400,{error:"Empleado inválido"},cors);
      const one=await admin.from("staff").select("id,user_id,role,active").eq("id",id).maybeSingle();
-     if(one.error||!one.data||one.data.role!=="employee")return reply(404,{error:"Empleado no encontrado"},cors);
+     if(one.error||!one.data||one.data.role==="admin")return reply(404,{error:"Empleado no encontrado"},cors);
      if(action==="reset"){
        const password=newSecret();
        const upd=await admin.auth.admin.updateUserById(one.data.user_id,{password});
        if(upd.error)throw upd.error;
+       await admin.from("admin_audit").insert({action:"staff_reset",actor_staff_id:owner.data.id,target_staff_id:id,
+          subject_id:id,reason:"Restablecimiento de acceso solicitado por dirección"});
        return reply(200,{ok:true,password,note:"La nueva contraseña sustituye a la anterior. Cópiala ahora."},cors);
      }
      const active=Boolean(body.active);
@@ -70,16 +74,23 @@ Deno.serve(async req=>{
        const {count}=await admin.from("staff").select("id",{count:"exact",head:true}).eq("active",true).eq("role","employee");
        if((count||0)>=10)return reply(409,{error:"Máximo 10 empleados activos"},cors);
      }
-     const upd=await admin.from("staff").update({active}).eq("id",id).eq("role","employee");
+     const upd=await admin.from("staff").update({active}).eq("id",id).neq("role","admin");
      if(upd.error)throw upd.error;
+     await admin.from("admin_audit").insert({action:"staff_status",actor_staff_id:owner.data.id,target_staff_id:id,
+         subject_id:id,before_data:{active:one.data.active},after_data:{active},reason:"Cambio de acceso de personal"});
      return reply(200,{ok:true},cors);
    }
    if(action==="target"){
      const id=str(body.staffId),v=body.weeklyTarget;
      if(!/^[0-9a-f-]{36}$/i.test(id)||v!==null&&v!==""&&(!Number.isFinite(Number(v))||Number(v)<0||Number(v)>60))
        return reply(400,{error:"Datos inválidos"},cors);
-     const upd=await admin.from("staff").update({weekly_target:v===""||v===null?null:Number(v)}).eq("id",id).eq("role","employee");
+     const whoTarget=await admin.from("staff").select("weekly_target").eq("id",id).neq("role","admin").single();
+     if(whoTarget.error)return reply(404,{error:"Trabajador no encontrado"},cors);
+     const upd=await admin.from("staff").update({weekly_target:v===""||v===null?null:Number(v)}).eq("id",id).neq("role","admin");
      if(upd.error)throw upd.error;
+     await admin.from("admin_audit").insert({action:"staff_target",actor_staff_id:owner.data.id,target_staff_id:id,
+       subject_id:id,before_data:{weekly_target:whoTarget.data.weekly_target},after_data:{weekly_target:v},
+       reason:"Actualización de jornada contratada"});
      return reply(200,{ok:true},cors);
    }
    return reply(400,{error:"Acción desconocida"},cors);
