@@ -6,7 +6,7 @@ app.innerHTML='<div style="min-height:100vh;background:#faf8f2;padding:28px 15px
  '<div style="max-width:560px;margin:20px auto 0">'+root+'<section class="card" style="margin-top:28px;padding:30px">'+
  '<div class="eyebrow">ACTIVACIÓN PRIVADA · SOLO UNA VEZ</div><h1 style="margin:10px 0 16px">Crea tu cuenta de administrador<span class="accent">.</span></h1>'+
  '<p>Este paso vincula GOZA a tu cuenta. Elige un correo tuyo y una contraseña segura que solo tú conozcas.</p>'+
- '<form id="setupForm"><label>Nombre del responsable<input type="text" name="name" autocomplete="name" required maxlength="100" minlength="2" placeholder="Nombre y apellidos"></label>'+
+ '<form id="setupForm" class="login-form" style="margin-top:20px"><label>Nombre del responsable<input type="text" name="name" autocomplete="name" required maxlength="100" minlength="2" placeholder="Nombre y apellidos"></label>'+
  '<label>Correo electrónico del administrador<input type="email" name="email" required autocomplete="email" placeholder="tucorreo@dominio.es"></label>'+
  '<label>Contraseña nueva (mínimo 14 caracteres)<input type="password" name="password" required minlength="14" maxlength="128" autocomplete="new-password" placeholder="Combina letras y números"></label>'+
  '<label>Repetir contraseña<input type="password" name="repeat" required minlength="14" autocomplete="new-password"></label>'+
