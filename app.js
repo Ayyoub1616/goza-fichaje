@@ -324,6 +324,19 @@ function downloadCsv(data){
  a.href=url;a.download="goza-fichajes-"+dateKey(now())+".csv";a.click();setTimeout(()=>URL.revokeObjectURL(url),3000);
 }
 setInterval(()=>{let x=$("#liveclock");if(x)x.textContent=clock(now())},1000);
-setInterval(async()=>{if(!me||document.hidden||refreshing||busy)return;refreshing=true;try{await all();await attendance.load();render()}catch{}finally{refreshing=false}},60000);
+setInterval(async()=>{
+ if(!me||document.hidden||refreshing||busy)return;
+ refreshing=true;
+ try{
+  const profile=await db.from("staff").select("*").eq("user_id",user.id).maybeSingle();
+  if(profile.error)throw profile.error;
+  if(!profile.data||!profile.data.active){await db.auth.signOut();return;}
+  if(me.role!==profile.data.role){page="home";secret=null;selectedRecords=null;}
+  me=profile.data;
+  await all();await attendance.load();await management.load();
+  render();
+ }catch(e){console.warn("No se pudo actualizar el panel");}
+ finally{refreshing=false}
+},60000);
 db.auth.onAuthStateChange((event)=>{if(event==="SIGNED_OUT"){me=null;user=null;renderLogin()}});
 init();
