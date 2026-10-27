@@ -110,7 +110,7 @@ export class AttendanceModule{
    const p=this.plans.find(x=>x.id===b.dataset.attJustify);if(!p)return;
    const why=prompt("Motivo de incidencia del turno "+this.dateTime(p)+" (mínimo 8 caracteres). No incluyas diagnósticos médicos.");
    if(why===null)return;
-   const k=["late","late-early","late-extra"].includes(this.status(p).key)?"late":["early","extra"].includes(this.status(p).key)?"early_exit":"absence";
+   const k=["late","late-early","late-extra"].includes(this.status(p).key)?"late":this.status(p).key==="early"?"early_exit":this.status(p).key==="extra"?"other":"absence";
    this.perform(async()=>await this.rpc("submit_attendance_request",{
     p_from:p.work_date,p_to:p.work_date,p_kind:k,p_reason:why,p_plan:p.id
    }));
