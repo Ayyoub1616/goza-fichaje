@@ -72,7 +72,37 @@ function layout(content){
  $$("[data-page]").forEach(b=>b.onclick=()=>{page=b.dataset.page;secret=null;render()});
  $("[data-action=logout]")?.addEventListener("click",async()=>{await db.auth.signOut();location.reload()});
 }
+
+function renderSetup(){
+ app.innerHTML='<div class="login-wrap"><div class="login-visual"><div>'+logo+'<div class="login-head">GOZA<br><em>CONTROL.</em></div><p>Activa tu acceso privado como responsable del restaurante.</p></div><div class="login-foot">ACTIVACIÓN INICIAL · SOLO PROPIETARIO</div></div>'+
+ '<div class="login-side"><div class="login-form"><div class="eyebrow">CONFIGURACIÓN INICIAL PROTEGIDA</div><h1>Crear administrador<span class="accent">.</span></h1><p>Elige tu correo y contraseña. El código de activación se utiliza una sola vez y no es tu contraseña.</p>'+
+ '<form id="setupForm"><label>Tu correo personal de administración<input name="email" type="email" required autocomplete="email" placeholder="tu@correo.es"></label>'+
+ '<label>Contraseña nueva (mínimo 12 caracteres)<input name="password" type="password" minlength="12" required autocomplete="new-password"></label>'+
+ '<label>Repetir contraseña<input name="confirm" type="password" minlength="12" required autocomplete="new-password"></label>'+
+ '<label>Código privado de activación<input name="code" type="password" required autocomplete="off" placeholder="Código que te entregaré"></label>'+
+ '<button class="primary full" type="submit">Activar mi administrador →</button></form>'+
+ '<p class="small-help">Este formulario crea una única cuenta administradora; después se bloquea automáticamente.</p>'+
+ '<a href="./">Volver al acceso</a><div id="message" class="message" hidden></div></div></div></div>';
+ $("#setupForm").onsubmit=async e=>{
+  e.preventDefault();if(busy)return;const f=new FormData(e.target),email=String(f.get("email")).trim(),password=String(f.get("password")),confirm=String(f.get("confirm")),code=String(f.get("code")).trim();
+  if(password!==confirm){notice("Las dos contraseñas no coinciden",true);return}
+  if(password.length<12||!/[A-Za-z]/.test(password)||!/\d/.test(password)){notice("Usa 12 caracteres, letras y números como mínimo",true);return}
+  busy=true;$("#setupForm button").disabled=true;
+  try{
+   const res=await fetch(cfg.supabaseUrl+"/functions/v1/bootstrap-goza-admin",{
+    method:"POST",headers:{"Content-Type":"application/json","apikey":cfg.supabasePublishableKey},
+    body:JSON.stringify({email,password,code})});
+   const data=await res.json().catch(()=>({error:"Respuesta del servidor no válida"}));
+   if(!res.ok)throw Error(data.error||"No se pudo activar tu cuenta");
+   const {error}=await db.auth.signInWithPassword({email,password});
+   if(error)throw Error("Cuenta creada, pero no se pudo iniciar sesión. Entra con tu correo y contraseña.");
+   history.replaceState(null,"",location.pathname);
+   busy=false;await init();
+  }catch(ex){notice(fmtError(ex),true);busy=false;$("#setupForm button").disabled=false}
+ };
+}
 function renderLogin(){
+ if(new URLSearchParams(location.search).has('setup'))return renderSetup();
  me=null;
  app.innerHTML='<div class="login-wrap"><div class="login-visual"><div>'+logo+'<div class="login-head">EL TIEMPO<br><em>IMPORTA.</em></div><p>GOZA / Equipo. Una forma más fácil de registrar tu jornada.</p></div><div class="login-foot">ZARAGOZA · TACOS FRANCESES</div></div>'+
  '<div class="login-side"><div class="login-form"><div class="eyebrow">ACCESO PRIVADO</div><h1>Bienvenido<br>al equipo<span class="accent">.</span></h1><p>Inicia sesión para registrar tu jornada.</p>'+
