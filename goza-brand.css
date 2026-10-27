@@ -89,3 +89,8 @@ body{background:var(--paper)}
 .goza-alert-btn b{display:inline-block;margin-left:4px;padding:2px 7px;border-radius:100px;background:#f48717;color:#171717;font-size:12px}
 .goza-alert-btn:hover{background:#38291d}
 @media(max-width:540px){.goza-alert-btn{padding:7px 8px;font-size:13px}.goza-alert-btn b{font-size:10px}}
+
+.goza-arrival-notice{background:#422615;color:#fff;padding:16px;border-radius:13px;border:1px solid #f58a26;margin:17px 0;max-width:580px}
+.goza-arrival-notice b{color:#ffad48}
+.goza-arrival-notice p{font-size:12px;margin:7px 0 12px;color:#f6e3cf}
+.goza-arrival-notice .table-btn{background:#ff9b31;color:#211609;border:0;font-size:12px}
