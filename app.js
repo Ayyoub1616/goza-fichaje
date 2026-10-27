@@ -1,5 +1,6 @@
 import {createClient} from "https://esm.sh/@supabase/supabase-js@2.57.4";
 import {AttendanceModule} from "./attendance.mjs";
+import {GozaManagement} from "./management.mjs";
 const cfg=window.GOZA_CONFIG||{},app=document.getElementById("app"),TZ="Europe/Madrid";
 if(!cfg.supabaseUrl||!cfg.supabasePublishableKey)throw new Error("Falta conexión de GOZA.");
 const db=createClient(cfg.supabaseUrl,cfg.supabasePublishableKey,{auth:{autoRefreshToken:true,persistSession:true}});
@@ -27,7 +28,7 @@ const hrs=s=>Number(netSeconds(s)/3600).toLocaleString("es-ES",{minimumFractionD
 const staffName=id=>people.find(x=>x.id===id)?.full_name||"Empleado";
 const state=s=>!s.ended_at?(s.pause_started_at?"En pausa":"Trabajando"):"Finalizado";
 const statusPill=s=>'<span class="status '+(!s.ended_at?"on":"off")+'">'+esc(state(s))+"</span>";
-const logo='<div class="brand"><span class="brand-icon">G</span><span class="brand-text"><b>GOZA<span>·</span></b><small>TACOS FRANCESES</small></span></div>';
+const logo='<div class="brand goza-logo"><img src="./goza-mark.svg" alt="GOZA TACOS À LA FRANÇAISE" class="goza-logo-img"><span class="brand-text"><b>GOZA<span>·</span></b><small>TACOS À LA FRANÇAISE</small></span></div>';
 const setLoading=x=>{busy=x;$$("button[data-action]").forEach(e=>e.disabled=x)};
 const notice=(message,bad=false)=>{let x=$("#message");if(x){x.className="message "+(bad?"bad":"ok");x.textContent=message; x.hidden=false; setTimeout(()=>{if(x)x.hidden=true},7000)}else alert(message)};
 const fmtError=e=>e?.message||"No se pudo completar la operación";
@@ -42,8 +43,12 @@ const all=async()=>{const [ss,pp,ii,cc]=await Promise.all([
 };
 const attendance=new AttendanceModule({
  db,escape:esc,format:fmt,getMe:()=>me,getPeople:()=>people,getShifts:()=>shifts,
- onChange:async()=>{await all();await attendance.load();render()},
+ onChange:async()=>{await all();await attendance.load();await management.load();render()},
  notify:notice
+});
+const management=new GozaManagement({
+ db,e:esc,fmt,getMe:()=>me,getPeople:()=>people,getShifts:()=>shifts,notify:notice,
+ reload:async()=>{await all();await attendance.load();await management.load();if(selectedRecords)selectedRecords=await loadHistoricalRecords();render()}
 });
 async function loadHistoricalRecords(){
  // Consulta paginada: los 95 días del dashboard no limitan el histórico disponible.
@@ -64,16 +69,18 @@ async function init(){
  let x=await db.from("staff").select("*").eq("user_id",user.id).maybeSingle();
  if(x.error)throw x.error;
  if(!x.data||!x.data.active){return renderBlocked()}
- me=x.data;await all();await attendance.load();
+ me=x.data;await all();await attendance.load();await management.load();
  render();
  }catch(e){app.innerHTML='<div class="splash"><h1>No se pudo cargar GOZA</h1><p>'+esc(fmtError(e))+'</p><button onclick="location.reload()">Reintentar</button></div>'}
 }
 const heading=(title,sub="")=>'<div class="heading"><div><div class="eyebrow">GOZA / CONTROL HORARIO</div><h1>'+title+'</h1><p>'+sub+'</p></div><span class="dateChip">'+esc(dateLong(now()))+'</span></div>';
 function layout(content){
  app.innerHTML='<div class="shell"><header class="top"><div class="top-inner">'+logo+'<div class="top-right">'+(me?'<span class="profile">'+esc(me.full_name)+'</span><button class="light" data-action="logout">Salir ↗</button>':"")+'</div></div></header>'+
- (me?.role==="admin"?'<nav class="admin-nav"><div class="nav-in">'+[
- ["home","Resumen"],["team","Empleados"],["schedule","Horarios"],["attendance","Asistencia"],["records","Fichajes"],["issues","Incidencias"],["account","Mi cuenta"]
- ].map(([k,l])=>'<button data-page="'+k+'" class="'+(page===k?"active":"")+'">'+l+"</button>").join("")+'</div></nav>':"")+
+ (me?.role==="admin"||me?.role==="manager"?'<nav class="admin-nav"><div class="nav-in">'+[
+ ["home","Resumen"],...(me.role==="admin"?[["team","Empleados"]]:[]),
+ ["schedule","Horarios"],["attendance","Asistencia"],["records","Fichajes"],["issues","Incidencias"],
+ ...(me.role==="admin"?[["audit","Auditoría"]]:[]),["account","Mi cuenta"]
+ ].map(([k,l])=>'<button data-page="'+k+'" class="'+(page===k?"active"?"active":"")+'">'+l+"</button>").join("")+'</div></nav>':"")+
  '<main class="container">'+content+'<div id="message" class="message" hidden></div></main><footer>GOZA TACOS · Zaragoza · Hora oficial de España · Acceso privado</footer></div>';
  $$("[data-page]").forEach(b=>b.onclick=()=>{page=b.dataset.page;secret=null;render()});
  $("[data-action=logout]")?.addEventListener("click",async()=>{await db.auth.signOut();location.reload()});
@@ -147,7 +154,7 @@ function renderBlocked(){
  app.innerHTML='<div class="splash">'+logo+'<h1>Acceso sin autorización</h1><p>Tu usuario aún no está dado de alta o está desactivado. Consulta con el responsable.</p><button id="bye" class="primary">Cerrar sesión</button></div>';
  $("#bye").onclick=async()=>{await db.auth.signOut();location.reload()};
 }
-function render(){if(!me)return renderLogin();if(me.role==="employee")return renderEmployee();if(page==="home")return renderHome();if(page==="team")return renderTeam();if(page==="records")return renderRecords();if(page==="schedule")return attendance.adminSchedule({layout,heading});if(page==="attendance")return attendance.adminAttendance({layout,heading});if(page==="issues")return renderIssues();renderAccount()}
+function render(){if(!me)return renderLogin();if(me.role==="employee")return renderEmployee();if(page==="home")return renderHome();if(page==="team"&&me.role==="admin")return renderTeam();if(page==="records")return renderRecords();if(page==="schedule")return attendance.adminSchedule({layout,heading});if(page==="attendance")return attendance.adminAttendance({layout,heading});if(page==="issues")return renderIssues();if(page==="audit"&&me.role==="admin")return management.auditPage({layout,heading});renderAccount()}
 function currentShift(){return shifts.find(s=>s.staff_id===me.id&&!s.ended_at)}
 function renderEmployee(){
  const current=currentShift(),my=shifts.filter(s=>s.staff_id===me.id);
@@ -208,7 +215,7 @@ function shiftTable(list,actions=false){
  (actions?'<td><button class="table-btn" data-correct="'+s.id+'">Corregir</button></td>':"")+'</tr>').join(""):'<tr><td class="empty" colspan="'+(actions?7:6)+'">No hay registros.</td></tr>')+"</tbody></table></div>"
 }
 function renderTeam(){
- const employees=people.filter(e=>e.role==="employee"),active=employees.filter(e=>e.active).length;
+ const employees=people.filter(e=>e.role!=="admin"),active=employees.filter(e=>e.active).length;
  layout(heading('Tu equipo<span class="accent">.</span>','Solo el administrador puede crear accesos y cambiar las credenciales.')+
  '<div class="card"><div class="section-head"><h2>Dar de alta empleado</h2><span class="counter">'+active+' / 10 activos</span></div><form id="add" class="create-form">'+
  '<label>Nombre y apellidos<input name="name" required minlength="2" maxlength="100" placeholder="Nombre completo"></label><label>Número de empleado<input name="code" required pattern="[A-Za-z0-9-]{3,24}" placeholder="GOZA-001" autocapitalize="characters"></label>'+
