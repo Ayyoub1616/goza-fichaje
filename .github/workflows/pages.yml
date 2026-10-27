@@ -18,10 +18,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Validar JavaScript y evitar claves privadas
+        run: |
+          node --check app.js
+          node --check demo.js
+          node --check bootstrap.js
+          if grep -Ei 'service_role|sb_secret_|postgres://' config.js; then
+            echo 'No se pueden publicar secretos en config.js'
+            exit 1
+          fi
+      - name: Empaquetar únicamente el frontend público
+        run: |
+          mkdir -p dist
+          cp index.html app.js styles.css demo.js demo.css config.js bootstrap.js favicon.svg dist/
+          printf 'Publicada solo la web; SQL y código de servidor quedan fuera.\n'
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
         with:
-          path: .
+          path: dist
       - name: Publicar web
         id: deployment
         uses: actions/deploy-pages@v4
