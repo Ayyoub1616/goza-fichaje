@@ -44,7 +44,7 @@ Deno.serve(async req=>{
      const existing=await admin.from("staff").select("id").eq("employee_code",code).maybeSingle();
      if(existing.data)return reply(409,{error:"Ese código ya está registrado"},cors);
      const password=newSecret();
-     const email=code.toLowerCase()+"@team.goza-fichaje.invalid";
+     const email=code.toLowerCase()+"@goza-staff.example.com";
      const made=await admin.auth.admin.createUser({email,password,email_confirm:true});
      if(made.error||!made.data.user)return reply(409,{error:"No se pudo crear el acceso. Comprueba que el código sea único."},cors);
      const ins=await admin.from("staff").insert({
