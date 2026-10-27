@@ -113,16 +113,28 @@ function renderLogin(){
  '<div class="login-help">¿No tienes acceso? Solicítalo al responsable del restaurante.<br>La contraseña no se comparte entre empleados.</div><div id="message" class="message" hidden></div></div></div></div>';
  $$("[data-mode]").forEach(b=>b.onclick=()=>{loginMode=b.dataset.mode;renderLogin()});
  $("#signin").onsubmit=async e=>{
- e.preventDefault();if(busy)return;setLoading(true);
- const f=new FormData(e.target);let identity=String(f.get("identity")).trim();
- if(loginMode==="employee"){
- identity=identity.toUpperCase();
- if(!/^[A-Z0-9-]{3,24}$/.test(identity)){notice("Introduce tu código de empleado.",true);setLoading(false);return}
- identity=identity.toLowerCase()+"@goza-staff.example.com";
- }
+ e.preventDefault();
  if(busy)return;
- const {error}=await db.auth.signInWithPassword({email:identity,password:String(f.get("password"))});
- if(error){notice("Código/correo o contraseña incorrectos.",true);setLoading(false)} else {setLoading(false);await init()}
+ const form=e.currentTarget,submit=form.querySelector('button[type="submit"]');
+ busy=true;
+ if(submit){submit.disabled=true;submit.textContent="Iniciando sesión…";}
+ try{
+  const f=new FormData(form);
+  let identity=String(f.get("identity")||"").trim();
+  const password=String(f.get("password")||"");
+  if(loginMode==="employee"){
+   identity=identity.toUpperCase();
+   if(!/^[A-Z0-9-]{3,24}$/.test(identity))throw Error("Introduce un código de empleado válido.");
+   identity=identity.toLowerCase()+"@goza-staff.example.com";
+  }else if(!identity.includes("@"))throw Error("Introduce tu correo de administrador.");
+  const {error}=await db.auth.signInWithPassword({email:identity,password});
+  if(error)throw Error("Correo/código o contraseña incorrectos. Comprueba los datos.");
+  await init();
+ }catch(error){notice(fmtError(error),true)}
+ finally{
+  busy=false;
+  if(submit.isConnected){submit.disabled=false;submit.textContent="Entrar a GOZA →";}
+ }
  };
 }
 function renderBlocked(){
