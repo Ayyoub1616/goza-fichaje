@@ -24,6 +24,7 @@ jobs:
           node --check demo.js
           node --check bootstrap.js
           node --check activate.js
+          node tests/login-smoke.cjs
           if grep -Ei 'service_role|sb_secret_|postgres://' config.js; then
             echo 'No se pueden publicar secretos en config.js'
             exit 1
