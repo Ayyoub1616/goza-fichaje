@@ -25,6 +25,7 @@ jobs:
           node --check bootstrap.js
           node --check activate.js
           node --check attendance.mjs
+          node --check management.mjs
           node --test tests/attendance.test.mjs
           node tests/login-smoke.cjs
           if grep -Ei 'service_role|sb_secret_|postgres://' config.js; then
@@ -34,7 +35,7 @@ jobs:
       - name: Empaquetar únicamente el frontend público
         run: |
           mkdir -p dist
-          cp index.html app.js styles.css demo.js demo.css config.js bootstrap.js activate.html activate.js attendance.mjs attendance.css favicon.svg dist/
+          cp index.html app.js styles.css demo.js demo.css config.js bootstrap.js activate.html activate.js attendance.mjs attendance.css management.mjs goza-brand.css goza-mark.svg favicon.svg dist/
           printf 'Publicada solo la web; SQL y código de servidor quedan fuera.\n'
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
