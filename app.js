@@ -118,7 +118,7 @@ function renderLogin(){
  if(loginMode==="employee"){
  identity=identity.toUpperCase();
  if(!/^[A-Z0-9-]{3,24}$/.test(identity)){notice("Introduce tu código de empleado.",true);setLoading(false);return}
- identity=identity.toLowerCase()+"@team.goza-fichaje.invalid";
+ identity=identity.toLowerCase()+"@goza-staff.example.com";
  }
  if(busy)return;
  const {error}=await db.auth.signInWithPassword({email:identity,password:String(f.get("password"))});
