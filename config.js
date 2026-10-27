@@ -1,3 +1,6 @@
-// Solo configuración pública de acceso a la API.
-// Las credenciales de servidor nunca deben aparecer en esta web.
-window.GOZA_CONFIG = { supabaseUrl: '', supabasePublishableKey: '' };
+// GOZA Fichaje · Parámetros públicos de conexión con Supabase.
+// La autorización se comprueba en el servidor, nunca en este fichero.
+window.GOZA_CONFIG = {
+  supabaseUrl: "https://cbadexhiekwcxcbivifk.supabase.co",
+  supabasePublishableKey: "sb_publishable_jdyP-ktvlzsgXvYiRRH9TQ_G5emIh_4"
+};
