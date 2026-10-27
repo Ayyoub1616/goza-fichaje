@@ -1,3 +1,3 @@
-// GOZA Fichaje. Valores publicables de conexión al proyecto Supabase.
-// No incluir contraseñas ni claves con privilegios de administrador.
+// Solo configuración pública de acceso a la API.
+// Las credenciales de servidor nunca deben aparecer en esta web.
 window.GOZA_CONFIG = { supabaseUrl: '', supabasePublishableKey: '' };
