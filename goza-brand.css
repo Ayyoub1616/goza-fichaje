@@ -94,3 +94,7 @@ body{background:var(--paper)}
 .goza-arrival-notice b{color:#ffad48}
 .goza-arrival-notice p{font-size:12px;margin:7px 0 12px;color:#f6e3cf}
 .goza-arrival-notice .table-btn{background:#ff9b31;color:#211609;border:0;font-size:12px}
+
+.goza-manual-shortcuts{display:flex;gap:8px;flex-wrap:wrap;grid-column:1/-1}
+.goza-manual-shortcuts button{font-size:11px;padding:9px 12px}
+@media(max-width:640px){.goza-manual-shortcuts{grid-column:1}}
