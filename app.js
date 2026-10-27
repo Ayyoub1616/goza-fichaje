@@ -1,4 +1,5 @@
 import {createClient} from "https://esm.sh/@supabase/supabase-js@2.57.4";
+import {AttendanceModule} from "./attendance.mjs";
 const cfg=window.GOZA_CONFIG||{},app=document.getElementById("app"),TZ="Europe/Madrid";
 if(!cfg.supabaseUrl||!cfg.supabasePublishableKey)throw new Error("Falta conexión de GOZA.");
 const db=createClient(cfg.supabaseUrl,cfg.supabasePublishableKey,{auth:{autoRefreshToken:true,persistSession:true}});
@@ -39,6 +40,11 @@ const all=async()=>{const [ss,pp,ii,cc]=await Promise.all([
  for(const t of [ss,pp,ii,cc])if(t.error)throw t.error;
  people=ss.data||[];shifts=pp.data||[];incidents=ii.data||[];corrections=cc.data||[];
 };
+const attendance=new AttendanceModule({
+ db,escape:esc,format:fmt,getMe:()=>me,getPeople:()=>people,getShifts:()=>shifts,
+ onChange:async()=>{await all();await attendance.load();render()},
+ notify:notice
+});
 async function loadHistoricalRecords(){
  // Consulta paginada: los 95 días del dashboard no limitan el histórico disponible.
  const base=filterFrom||dateKey(new Date(Date.now()-95*86400000));
@@ -58,7 +64,7 @@ async function init(){
  let x=await db.from("staff").select("*").eq("user_id",user.id).maybeSingle();
  if(x.error)throw x.error;
  if(!x.data||!x.data.active){return renderBlocked()}
- me=x.data;await all();
+ me=x.data;await all();await attendance.load();
  render();
  }catch(e){app.innerHTML='<div class="splash"><h1>No se pudo cargar GOZA</h1><p>'+esc(fmtError(e))+'</p><button onclick="location.reload()">Reintentar</button></div>'}
 }
@@ -66,7 +72,7 @@ const heading=(title,sub="")=>'<div class="heading"><div><div class="eyebrow">GO
 function layout(content){
  app.innerHTML='<div class="shell"><header class="top"><div class="top-inner">'+logo+'<div class="top-right">'+(me?'<span class="profile">'+esc(me.full_name)+'</span><button class="light" data-action="logout">Salir ↗</button>':"")+'</div></div></header>'+
  (me?.role==="admin"?'<nav class="admin-nav"><div class="nav-in">'+[
- ["home","Resumen"],["team","Empleados"],["records","Fichajes"],["issues","Incidencias"],["account","Mi cuenta"]
+ ["home","Resumen"],["team","Empleados"],["schedule","Horarios"],["attendance","Asistencia"],["records","Fichajes"],["issues","Incidencias"],["account","Mi cuenta"]
  ].map(([k,l])=>'<button data-page="'+k+'" class="'+(page===k?"active":"")+'">'+l+"</button>").join("")+'</div></nav>':"")+
  '<main class="container">'+content+'<div id="message" class="message" hidden></div></main><footer>GOZA TACOS · Zaragoza · Hora oficial de España · Acceso privado</footer></div>';
  $$("[data-page]").forEach(b=>b.onclick=()=>{page=b.dataset.page;secret=null;render()});
@@ -141,7 +147,7 @@ function renderBlocked(){
  app.innerHTML='<div class="splash">'+logo+'<h1>Acceso sin autorización</h1><p>Tu usuario aún no está dado de alta o está desactivado. Consulta con el responsable.</p><button id="bye" class="primary">Cerrar sesión</button></div>';
  $("#bye").onclick=async()=>{await db.auth.signOut();location.reload()};
 }
-function render(){if(!me)return renderLogin();if(me.role==="employee")return renderEmployee();if(page==="home")return renderHome();if(page==="team")return renderTeam();if(page==="records")return renderRecords();if(page==="issues")return renderIssues();renderAccount()}
+function render(){if(!me)return renderLogin();if(me.role==="employee")return renderEmployee();if(page==="home")return renderHome();if(page==="team")return renderTeam();if(page==="records")return renderRecords();if(page==="schedule")return attendance.adminSchedule({layout,heading});if(page==="attendance")return attendance.adminAttendance({layout,heading});if(page==="issues")return renderIssues();renderAccount()}
 function currentShift(){return shifts.find(s=>s.staff_id===me.id&&!s.ended_at)}
 function renderEmployee(){
  const current=currentShift(),my=shifts.filter(s=>s.staff_id===me.id);
@@ -158,10 +164,11 @@ function renderEmployee(){
  '<section class="card"><div class="eyebrow">¿OLVIDASTE FICHAR?</div><h3>Notifica una incidencia</h3><p>El responsable podrá revisar una entrada, salida o pausa olvidada.</p><form id="incident"><textarea name="reason" required minlength="8" maxlength="1000" placeholder="Ej.: Ayer terminé a las 00:20 y olvidé registrar la salida"></textarea><button class="small-primary">Enviar incidencia</button></form></section></div>'+
  '<section class="card"><div class="section-head"><h2>Mis últimos fichajes</h2><span class="hint">Solo puedes ver los tuyos</span></div><div class="table-scroll"><table><thead><tr><th>Entrada</th><th>Salida</th><th>Pausa</th><th>Tiempo</th><th>Estado</th></tr></thead><tbody>'+
  (my.length?my.slice(0,25).map(s=>'<tr><td>'+fmt(s.started_at)+'</td><td>'+fmt(s.ended_at)+'</td><td>'+Math.round(s.paused_seconds/60)+' min</td><td><b>'+hrs(s)+' h</b></td><td>'+statusPill(s)+'</td></tr>').join(""):'<tr><td colspan="5" class="empty">Aún no hay fichajes.</td></tr>')+
- '</tbody></table></div></section><section class="card small-text"><b>Privacidad y control</b><p>Los fichajes usan la hora del servidor. Si te equivocas, informa del error; las correcciones quedan auditadas. No compartas tu contraseña.</p><button class="light" data-action="password">Cambiar mi contraseña</button></section>');
- $$("[data-clock]").forEach(b=>b.onclick=async()=>{if(busy)return;setLoading(true);try{await rpc("clock_action",{p_action:b.dataset.clock});await all();render();notice("Fichaje confirmado y guardado en el servidor")}catch(e){notice(fmtError(e),true)}finally{setLoading(false)}});
+ '</tbody></table></div></section>'+attendance.employeeWidget()+'<section class="card small-text"><b>Privacidad y control</b><p>Los fichajes usan la hora del servidor. Si te equivocas, informa del error; las correcciones quedan auditadas. No compartas tu contraseña.</p><button class="light" data-action="password">Cambiar mi contraseña</button></section>');
+ $$("[data-clock]").forEach(b=>b.onclick=async()=>{if(busy)return;setLoading(true);try{await rpc("clock_action",{p_action:b.dataset.clock});await all();await attendance.load();render();notice("Fichaje confirmado y guardado en el servidor")}catch(e){notice(fmtError(e),true)}finally{setLoading(false)}});
  $("#incident").onsubmit=async e=>{e.preventDefault();if(busy)return;setLoading(true);try{await rpc("submit_incident",{p_reason:new FormData(e.target).get("reason")});await all();render();notice("Incidencia enviada al responsable")}catch(e){notice(fmtError(e),true)}finally{setLoading(false)}};
  $("[data-action=password]").onclick=()=>changePassword();
+ attendance.bindEmployee();
 }
 function stats(){
  const active=people.filter(p=>p.active&&p.role==="employee"),open=shifts.filter(s=>!s.ended_at),
@@ -191,8 +198,9 @@ function renderHome(){
  s.pending.slice(0,5).map(x=>'<div class="warning-row">◉ Incidencia de '+esc(staffName(x.staff_id))+': '+esc(x.reason.slice(0,90))+'</div>').join("")||
  '<div class="empty">No hay avisos pendientes.</div>')+'</section></div>'+
  '<section class="card"><div class="section-head"><h2>Últimos movimientos</h2><button class="light" data-action="go-records">Ver todos →</button></div>'+shiftTable(shifts.slice(0,12))+'</section>'+
- '<div class="tip">Las alertas ayudan a revisar posibles incidencias, pero no determinan por sí solas infracciones u horas extra. Comprueba el convenio y el contrato.</div>');
+ attendance.adminDashboard()+'<div class="tip">Las alertas ayudan a revisar posibles incidencias, pero no determinan por sí solas infracciones u horas extra. Comprueba el convenio y el contrato.</div>');
  $("[data-action=go-records]").onclick=()=>{page="records";render()};
+ attendance.bindDashboard(next=>{page=next;render()});
 }
 function shiftTable(list,actions=false){
  return '<div class="table-scroll"><table><thead><tr><th>Empleado</th><th>Entrada</th><th>Salida</th><th>Pausas</th><th>Neto</th><th>Estado</th>'+(actions?"<th>Corrección</th>":"")+'</tr></thead><tbody>'+
@@ -300,6 +308,6 @@ function downloadCsv(data){
  a.href=url;a.download="goza-fichajes-"+dateKey(now())+".csv";a.click();setTimeout(()=>URL.revokeObjectURL(url),3000);
 }
 setInterval(()=>{let x=$("#liveclock");if(x)x.textContent=clock(now())},1000);
-setInterval(async()=>{if(!me||document.hidden||refreshing||busy)return;refreshing=true;try{await all();if(me.role==="admin"||!currentShift())render()}catch{}finally{refreshing=false}},60000);
+setInterval(async()=>{if(!me||document.hidden||refreshing||busy)return;refreshing=true;try{await all();await attendance.load();render()}catch{}finally{refreshing=false}},60000);
 db.auth.onAuthStateChange((event)=>{if(event==="SIGNED_OUT"){me=null;user=null;renderLogin()}});
 init();
