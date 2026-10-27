@@ -47,7 +47,7 @@ const attendance=new AttendanceModule({
  notify:notice
 });
 const management=new GozaManagement({
- db,e:esc,fmt,getMe:()=>me,getPeople:()=>people,getShifts:()=>shifts,notify:notice,
+ db,e:esc,fmt,getMe:()=>me,getPeople:()=>people,getShifts:()=>selectedRecords||shifts,notify:notice,
  reload:async()=>{await all();await attendance.load();await management.load();if(selectedRecords)selectedRecords=await loadHistoricalRecords();render()}
 });
 async function loadHistoricalRecords(){
@@ -161,7 +161,7 @@ function renderEmployee(){
  const today=dateKey(now()),recent=my.filter(s=>dateKey(s.started_at)===today);
  const todayStart=madridMidnight(today),todayEnd=madridMidnight(addDate(today));const todaySecs=my.reduce((n,s)=>n+overlapNet(s,todayStart,todayEnd),0);
  layout('<section class="employee-hero"><div class="eyebrow cream">REGISTRO DE JORNADA / '+esc(me.employee_code)+'</div>'+
- '<h1>Hola, '+esc(me.full_name.split(" ")[0])+'<span class="accent">.</span></h1><p>Tu jornada, en un toque.</p>'+
+ '<img class="goza-hero-logo" src="./goza-mark.svg" alt="GOZA TACOS">'+'<h1>Hola, '+esc(me.full_name.split(" ")[0])+'<span class="accent">.</span></h1><p>Tu jornada, en un toque.</p>'+
  '<div class="live-clock" id="liveclock">'+clock(now())+'</div><div class="todaydate">'+esc(dateLong(now()))+'</div><div class="hero-status '+(current?"working":"")+'">● '+(current?state(current):"Fuera de servicio")+'</div>'+
  '<div class="big-actions">'+(!current?'<button data-clock="entry" class="primary giant">▶&nbsp; Fichar entrada</button>':
  '<button data-clock="'+(current.pause_started_at?"break_end":"break_start")+'" class="primary giant">'+(current.pause_started_at?"↻&nbsp; Terminar pausa":"Ⅱ&nbsp; Iniciar pausa")+'</button>'+
