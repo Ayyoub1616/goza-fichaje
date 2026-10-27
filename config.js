@@ -1,2 +1,3 @@
-// Únicamente valores PUBLICABLES; nunca introducir service_role ni claves secretas.
+// GOZA Fichaje. Valores publicables de conexión al proyecto Supabase.
+// No incluir contraseñas ni claves con privilegios de administrador.
 window.GOZA_CONFIG = { supabaseUrl: '', supabasePublishableKey: '' };
