@@ -161,7 +161,7 @@ function stats(){
  const dayRest=[];
  for(const p of active){let rs=shifts.filter(s=>s.staff_id===p.id&&s.ended_at).sort((a,b)=>a.started_at.localeCompare(b.started_at));for(let j=1;j<rs.length;j++){
  const rest=(new Date(rs[j].started_at)-new Date(rs[j-1].ended_at))/3600000;
- if(rest>=0&&rest<12)dayRest.push({staff:p,rest,cur:rs[j]});
+ if(rest>=0&&rest<12&&dateKey(rs[j-1].ended_at)!==dateKey(rs[j].started_at))dayRest.push({staff:p,rest,cur:rs[j]});
  }}
  return {active,open,todaySeconds,weekSeconds,over12,pending,dayRest};
 }
