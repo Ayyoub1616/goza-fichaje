@@ -75,7 +75,11 @@ async function init(){
 }
 const heading=(title,sub="")=>'<div class="heading"><div><div class="eyebrow">GOZA / CONTROL HORARIO</div><h1>'+title+'</h1><p>'+sub+'</p></div><span class="dateChip">'+esc(dateLong(now()))+'</span></div>';
 function layout(content){
- app.innerHTML='<div class="shell"><header class="top"><div class="top-inner">'+logo+'<div class="top-right">'+(me?'<span class="profile">'+esc(me.full_name)+'</span><button class="light" data-action="logout">Salir ↗</button>':"")+'</div></div></header>'+
+ app.innerHTML='<div class="shell"><header class="top"><div class="top-inner">'+logo+'<div class="top-right">'+(me&&me.role!=="employee"?
+ '<button class="goza-alert-btn" data-page="attendance" title="Ver avisos">🔔 <b>'+(
+ attendance.requests.filter(q=>q.status==="pending").length+
+ attendance.plans.filter(q=>q.work_date===dateKey(now())&&q.status==="scheduled"&&attendance.status(q).severity>=2).length
+ )+'</b></button>':"")+(me?'<span class="profile">'+esc(me.full_name)+'</span><button class="light" data-action="logout">Salir ↗</button>':"")+'</div></div></header>'+
  (me?.role==="admin"||me?.role==="manager"?'<nav class="admin-nav"><div class="nav-in">'+[
  ["home","Resumen"],...(me.role==="admin"?[["team","Empleados"]]:[]),
  ["schedule","Horarios"],["attendance","Asistencia"],["records","Fichajes"],["issues","Incidencias"],
@@ -119,7 +123,7 @@ function renderLogin(){
  me=null;
  app.innerHTML='<div class="login-wrap"><div class="login-visual"><div>'+logo+'<div class="login-head">EL TIEMPO<br><em>IMPORTA.</em></div><p>GOZA / Equipo. Una forma más fácil de registrar tu jornada.</p></div><div class="login-foot">ZARAGOZA · TACOS FRANCESES</div></div>'+
  '<div class="login-side"><div class="login-form"><div class="eyebrow">ACCESO PRIVADO</div><h1>Bienvenido<br>al equipo<span class="accent">.</span></h1><p>Inicia sesión para registrar tu jornada.</p>'+
- '<div class="segment"><button class="'+(loginMode==="employee"?"selected":"")+'" data-mode="employee">Empleado</button><button class="'+(loginMode==="admin"?"selected":"")+'" data-mode="admin">Administrador</button></div>'+
+ '<div class="segment"><button class="'+(loginMode==="employee"?"selected":"")+'" data-mode="employee">Personal / Encargado</button><button class="'+(loginMode==="admin"?"selected":"")+'" data-mode="admin">Administrador</button></div>'+
  '<form id="signin"><label>'+(loginMode==="admin"?"Correo del administrador":"Número de empleado")+'<input name="identity" '+(loginMode==="admin"?'type="email"':'autocapitalize="characters"')+' required autocomplete="username" placeholder="'+(loginMode==="admin"?"tu@correo.es":"GOZA-001")+'"></label>'+
  '<label>Contraseña individual<input name="password" type="password" minlength="8" autocomplete="current-password" required placeholder="••••••••••••"></label>'+
  '<button class="primary full" type="submit" id="submitLogin">Entrar a GOZA →</button></form>'+
@@ -172,7 +176,7 @@ function renderEmployee(){
  '<section class="card"><div class="section-head"><h2>Mis últimos fichajes</h2><span class="hint">Solo puedes ver los tuyos</span></div><div class="table-scroll"><table><thead><tr><th>Entrada</th><th>Salida</th><th>Pausa</th><th>Tiempo</th><th>Estado</th></tr></thead><tbody>'+
  (my.length?my.slice(0,25).map(s=>'<tr><td>'+fmt(s.started_at)+'</td><td>'+fmt(s.ended_at)+'</td><td>'+Math.round(s.paused_seconds/60)+' min</td><td><b>'+hrs(s)+' h</b></td><td>'+statusPill(s)+'</td></tr>').join(""):'<tr><td colspan="5" class="empty">Aún no hay fichajes.</td></tr>')+
  '</tbody></table></div></section>'+attendance.employeeWidget()+'<section class="card small-text"><b>Privacidad y control</b><p>Los fichajes usan la hora del servidor. Si te equivocas, informa del error; las correcciones quedan auditadas. No compartas tu contraseña.</p><button class="light" data-action="password">Cambiar mi contraseña</button></section>');
- $$("[data-clock]").forEach(b=>b.onclick=async()=>{if(busy)return;setLoading(true);try{await rpc("clock_action",{p_action:b.dataset.clock});await all();await attendance.load();render();notice("Fichaje confirmado y guardado en el servidor")}catch(e){notice(fmtError(e),true)}finally{setLoading(false)}});
+ $$("[data-clock]").forEach(b=>b.onclick=async()=>{if(busy)return;setLoading(true);try{await rpc("clock_action",{p_action:b.dataset.clock});await all();await attendance.load();await management.load();render();notice("Fichaje confirmado y guardado en el servidor")}catch(e){notice(fmtError(e),true)}finally{setLoading(false)}});
  $("#incident").onsubmit=async e=>{e.preventDefault();if(busy)return;setLoading(true);try{await rpc("submit_incident",{p_reason:new FormData(e.target).get("reason")});await all();render();notice("Incidencia enviada al responsable")}catch(e){notice(fmtError(e),true)}finally{setLoading(false)}};
  $("[data-action=password]").onclick=()=>changePassword();
  attendance.bindEmployee();
@@ -187,7 +191,7 @@ function stats(){
  const dayRest=[];
  for(const p of active){let rs=shifts.filter(s=>s.staff_id===p.id&&s.ended_at).sort((a,b)=>a.started_at.localeCompare(b.started_at));for(let j=1;j<rs.length;j++){
  const rest=(new Date(rs[j].started_at)-new Date(rs[j-1].ended_at))/3600000;
- if(rest>=0&&rest<12&&dateKey(rs[j-1].ended_at)!==dateKey(rs[j].started_at))dayRest.push({staff:p,rest,cur:rs[j]});
+ if(rest>=0&&rest<12&&dateKey(rs[j-1].started_at)!==dateKey(rs[j].started_at))dayRest.push({staff:p,rest,cur:rs[j]});
  }}
  return {active,open,todaySeconds,weekSeconds,over12,pending,dayRest};
 }
