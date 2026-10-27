@@ -9,7 +9,7 @@ style.rel="stylesheet";style.href=useDemo?"./demo.css":"./styles.css";
 document.head.appendChild(style);
 if(setup){location.replace("./activate.html");return;}
 const script=document.createElement("script");
-script.src=useDemo?"./demo.js":"./app.js";
+script.src=useDemo?"./demo.js":"./app.js?v=20261027-loginfix";
 if(!useDemo)script.type="module";
 script.onerror=function(){document.getElementById("app").innerHTML="<main style='padding:30px;font:16px system-ui'>No se pudo cargar GOZA. Revisa tu conexión y recarga la página.</main>"};
 document.body.appendChild(script);
