@@ -1,6 +1,6 @@
 import {createClient} from "https://esm.sh/@supabase/supabase-js@2.57.4";
-import {AttendanceModule} from "./attendance.mjs";
-import {GozaManagement} from "./management.mjs";
+import {AttendanceModule} from "./attendance.mjs?v=goza20261027-final";
+import {GozaManagement} from "./management.mjs?v=goza20261027-final";
 const cfg=window.GOZA_CONFIG||{},app=document.getElementById("app"),TZ="Europe/Madrid";
 if(!cfg.supabaseUrl||!cfg.supabasePublishableKey)throw new Error("Falta conexión de GOZA.");
 const db=createClient(cfg.supabaseUrl,cfg.supabasePublishableKey,{auth:{autoRefreshToken:true,persistSession:true}});
