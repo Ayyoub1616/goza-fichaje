@@ -7,22 +7,26 @@ Web: https://ayyoub1616.github.io/goza-fichaje/
 - Proyecto Supabase **GOZA Fichaje**, exclusivo de este restaurante, `cbadexhiekwcxcbivifk` en `eu-west-3` (París).
 - Coste cotizado para el proyecto: **0 USD/mes** según Supabase; plan gratuito con límites, sin garantía de copias automáticas.
 - Esquema SQL instalado con RLS, tablas privadas, RPC transaccionales, auditoría de correcciones y eventos.
-- Edge Functions `manage-staff` (JWT obligatorio) y `bootstrap-goza-admin` (activación inicial protegida por código de un solo uso; `setup-admin` antiguo deshabilitado) desplegadas.
+- Edge Function `manage-staff` con JWT obligatorio desplegada; accesos iniciales por código deshabilitados por seguridad.
 - `config.js` conectado mediante URL y **clave publicable**. No hay claves de servicio ni contraseñas en GitHub.
 - GitHub Pages conectado con publicación automática.
 - **Pendiente:** el titular debe activar su primera cuenta con su propio correo y contraseña. Antes de eso no hay cuentas ni fichajes reales registrados.
 
-## Activación inicial de administrador
+## Activación inicial de administrador (paso pendiente)
 
-Abre: https://ayyoub1616.github.io/goza-fichaje/?setup=1
+Por seguridad, el arranque mediante códigos temporales está desactivado. Los dos endpoints de activación inicial tienen `verify_jwt=true` y no permiten otorgar permisos anónimamente.
 
-1. Escribe tu correo personal y una contraseña nueva de al menos 12 caracteres con letras y números.
-2. Copia el código privado de activación facilitado en la conversación con ChatGPT. **El código no está en este repositorio.**
-3. Después entra desde la web principal, elige «Administrador» e inicia sesión con correo y contraseña.
-4. Ve a «Empleados», crea cada trabajador y entrega su código y contraseña provisional de manera privada.
-5. Pide que cada trabajador cambie su contraseña tras el primer acceso. La función de activación ya no admite crear un segundo administrador.
+1. Abre [Supabase Authentication > Users](https://supabase.com/dashboard/project/cbadexhiekwcxcbivifk/auth/users).
+2. Con `Add user`, crea **tu propio usuario** con correo y contraseña segura (no compartir credenciales por el chat).
+3. Una vez creado, autoriza su UUID en `public.staff` como administrador único:
+   ```sql
+   insert into public.staff(user_id,employee_code,full_name,role,active)
+   values ('UUID_DEL_USUARIO_AUTH','GOZA-ADMIN','Administrador GOZA','admin',true);
+   ```
+   Este segundo paso puede realizarlo el asistente al detectar el usuario recién creado, después de que el titular indique que ha terminado el alta.
+4. Desde la web principal, entra como Administrador y utiliza `Empleados` para crear al personal y entregar sus códigos individuales.
 
-**Importante:** la activación solo funciona si no hay ningún administrador dado de alta. El código privado jamás debe publicarse en GitHub o redes sociales.
+**Nunca pegues contraseñas, tokens ni claves secretas en GitHub, en un formulario público o en este chat.**
 
 ## Qué permite
 
