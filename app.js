@@ -80,7 +80,7 @@ function layout(content){
  ["home","Resumen"],...(me.role==="admin"?[["team","Empleados"]]:[]),
  ["schedule","Horarios"],["attendance","Asistencia"],["records","Fichajes"],["issues","Incidencias"],
  ...(me.role==="admin"?[["audit","Auditoría"]]:[]),["account","Mi cuenta"]
- ].map(([k,l])=>'<button data-page="'+k+'" class="'+(page===k?"active"?"active":"")+'">'+l+"</button>").join("")+'</div></nav>':"")+
+ ].map(([k,l])=>'<button data-page="'+k+'" class="'+(page===k?"active":"")+'">'+l+"</button>").join("")+'</div></nav>':"")+
  '<main class="container">'+content+'<div id="message" class="message" hidden></div></main><footer>GOZA TACOS · Zaragoza · Hora oficial de España · Acceso privado</footer></div>';
  $$("[data-page]").forEach(b=>b.onclick=()=>{page=b.dataset.page;secret=null;render()});
  $("[data-action=logout]")?.addEventListener("click",async()=>{await db.auth.signOut();location.reload()});
