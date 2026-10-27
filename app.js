@@ -12,6 +12,15 @@ const clock=d=>new Intl.DateTimeFormat("es-ES",{timeZone:TZ,hour:"2-digit",minut
 const monthAgo=()=>{let d=now();d.setDate(d.getDate()-95);return d.toISOString()};
 const weekStart=()=>{let d=now(),v=dateKey(d).split("-").map(Number),today=new Date(Date.UTC(v[0],v[1]-1,v[2])),wd=(today.getUTCDay()+6)%7;today.setUTCDate(today.getUTCDate()-wd);return today.toISOString().slice(0,10)};
 const netSeconds=s=>Math.max(0,(new Date(s.ended_at||now())-new Date(s.started_at))/1000-(s.paused_seconds||0)-(s.pause_started_at?(now()-new Date(s.pause_started_at))/1000:0));
+const addDate=(ymd,days=1)=>{const d=new Date(ymd+"T12:00:00Z");d.setUTCDate(d.getUTCDate()+days);return d.toISOString().slice(0,10)};
+const madridMidnight=ymd=>{
+ const y=Number(ymd.slice(0,4)),m=Number(ymd.slice(5,7)),d=Number(ymd.slice(8,10));
+ const t=new Date(Date.UTC(y,m-1,d)),check=new Intl.DateTimeFormat("sv-SE",{timeZone:TZ,year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hourCycle:"h23"});
+ for(let offset=-3;offset<=1;offset++){const cand=new Date(t.getTime()+offset*3600000);if(check.format(cand).replace(" ","T")===ymd+"T00:00")return cand}
+ return new Date(t.getTime()-3600000)
+};
+// Estimación proporcional cuando un turno cruza medianoche; el detalle de eventos conserva pausas originales.
+const overlapNet=(s,from,to)=>{const a=new Date(s.started_at).getTime(),b=new Date(s.ended_at||now()).getTime(),lo=Math.max(a,new Date(from).getTime()),hi=Math.min(b,new Date(to).getTime()),dur=Math.max(0,b-a);return dur?Math.max(0,(hi-lo)/dur*netSeconds(s)):0};
 const hm=sec=>{const m=Math.max(0,Math.round(sec/60));return Math.floor(m/60)+" h "+String(m%60).padStart(2,"0")+" min"};
 const hrs=s=>Number(netSeconds(s)/3600).toLocaleString("es-ES",{minimumFractionDigits:2,maximumFractionDigits:2});
 const staffName=id=>people.find(x=>x.id===id)?.full_name||"Empleado";
@@ -82,7 +91,7 @@ function currentShift(){return shifts.find(s=>s.staff_id===me.id&&!s.ended_at)}
 function renderEmployee(){
  const current=currentShift(),my=shifts.filter(s=>s.staff_id===me.id);
  const today=dateKey(now()),recent=my.filter(s=>dateKey(s.started_at)===today);
- const todaySecs=recent.reduce((n,s)=>n+netSeconds(s),0);
+ const todayStart=madridMidnight(today),todayEnd=madridMidnight(addDate(today));const todaySecs=my.reduce((n,s)=>n+overlapNet(s,todayStart,todayEnd),0);
  layout('<section class="employee-hero"><div class="eyebrow cream">REGISTRO DE JORNADA / '+esc(me.employee_code)+'</div>'+
  '<h1>Hola, '+esc(me.full_name.split(" ")[0])+'<span class="accent">.</span></h1><p>Tu jornada, en un toque.</p>'+
  '<div class="live-clock" id="liveclock">'+clock(now())+'</div><div class="todaydate">'+esc(dateLong(now()))+'</div><div class="hero-status '+(current?"working":"")+'">● '+(current?state(current):"Fuera de servicio")+'</div>'+
@@ -102,8 +111,8 @@ function renderEmployee(){
 function stats(){
  const active=people.filter(p=>p.active&&p.role==="employee"),open=shifts.filter(s=>!s.ended_at),
  today=dateKey(now()),week=weekStart();
- const todaySeconds=shifts.filter(s=>dateKey(s.started_at)===today).reduce((n,s)=>n+netSeconds(s),0);
- const weekSeconds=shifts.filter(s=>dateKey(s.started_at)>=week).reduce((n,s)=>n+netSeconds(s),0);
+ const todaySeconds=shifts.reduce((n,s)=>n+overlapNet(s,madridMidnight(today),madridMidnight(addDate(today))),0);
+ const weekSeconds=shifts.reduce((n,s)=>n+overlapNet(s,madridMidnight(week),now()),0);
  const over12=open.filter(s=>now()-new Date(s.started_at)>12*3600000);
  const pending=incidents.filter(i=>i.status==="pending");
  const dayRest=[];
