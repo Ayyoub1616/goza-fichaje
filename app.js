@@ -226,7 +226,8 @@ function renderTeam(){
  (employees.length?employees.map(e=>'<div class="person-row team-row"><span class="avatar">'+esc(e.full_name.slice(0,1))+'</span><div><b>'+esc(e.full_name)+'</b><small>'+esc(e.employee_code)+' · '+(e.weekly_target===null?"Jornada no configurada":e.weekly_target+" h/semana")+'</small></div>'+
  '<span class="status '+(e.active?"on":"off")+'">'+(e.active?"Activo":"Inactivo")+'</span>'+
  '<button class="table-btn" data-reset="'+e.id+'">Nueva clave</button><button class="table-btn" data-target="'+e.id+'">Horas</button><button class="table-btn" data-toggle="'+e.id+'">'+(e.active?"Desactivar":"Activar")+'</button></div>').join(""):'<div class="empty">No hay empleados dados de alta.</div>')+
- '</section>');
+ '</section>'+management.ownerRolesCard());
+ management.bindRoles();
  $("#add").onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target);if(busy)return;setLoading(true);try{
  const response=await manage({action:"create",name:f.get("name"),code:String(f.get("code")).toUpperCase(),weeklyTarget:f.get("weeklyTarget")});
  secret={code:response.code,password:response.password};await all();render();notice("Empleado creado con acceso individual");
@@ -251,10 +252,11 @@ function renderRecords(){
  '<section class="card"><div class="section-head"><h2>Historial de correcciones</h2><span class="hint">Trazabilidad</span></div>'+
  '<div class="table-scroll"><table><thead><tr><th>Fecha</th><th>Empleado</th><th>Antes</th><th>Después</th><th>Motivo</th></tr></thead><tbody>'+
  (corrections.length?corrections.slice(0,30).map(c=>'<tr><td>'+fmt(c.changed_at)+'</td><td>'+esc(staffName(c.staff_id))+'</td><td>'+fmt(c.old_started_at)+' / '+fmt(c.old_ended_at)+'</td><td>'+fmt(c.new_started_at)+' / '+fmt(c.new_ended_at)+'</td><td>'+esc(c.reason)+'</td></tr>').join(""):'<tr><td colspan="5" class="empty">Todavía no hay correcciones.</td></tr>')+
- '</tbody></table></div></section>');
+ '</tbody></table></div></section>'+management.manualCard());
+ management.bindManual();
  $("[data-action=filter]").onclick=async()=>{filterFrom=$("#from").value;filterTo=$("#to").value;filterEmployee=$("#worker").value;try{selectedRecords=await loadHistoricalRecords();render();notice("Registros consultados desde el servidor")}catch(e){notice(fmtError(e),true)}};
  $("[data-action=export]").onclick=()=>downloadCsv(d);
- $$("[data-correct]").forEach(b=>b.onclick=()=>correctDialog(b.dataset.correct));
+ $("[data-correct]").forEach(b=>b.onclick=()=>management.correctionModal(b.dataset.correct));
 }
 function madridFormDate(iso){
  if(!iso)return "";
@@ -296,7 +298,7 @@ function renderIssues(){
 }
 function renderAccount(){
  layout(heading('Mi cuenta<span class="accent">.</span>','Seguridad del administrador y configuración básica.')+
- '<section class="card account"><h2>Administrador</h2><p><b>Nombre:</b> '+esc(me.full_name)+'</p><p><b>Correo:</b> '+esc(user.email)+'</p><p><b>Identificador:</b> '+esc(me.employee_code)+'</p><p>Tu cuenta administra los fichajes y las credenciales de los empleados. Activa MFA en Supabase para mayor seguridad.</p><button class="primary" data-action="password">Cambiar mi contraseña</button></section>'+
+ '<section class="card account"><h2>'+(me.role==="admin"?"Administrador principal":"Encargado")+'</h2><p><b>Nombre:</b> '+esc(me.full_name)+'</p><p><b>Correo:</b> '+esc(user.email)+'</p><p><b>Identificador:</b> '+esc(me.employee_code)+'</p><p>Tu cuenta administra los fichajes y las credenciales de los empleados. Activa MFA en Supabase para mayor seguridad.</p><button class="primary" data-action="password">Cambiar mi contraseña</button></section>'+
  '<section class="card"><h2>Retención y copias de seguridad</h2><p>Conserva los registros cuatro años y configura copias externas y recuperación de datos. La publicación GitHub Pages no almacena los fichajes.</p></section>');
  $("[data-action=password]").onclick=changePassword;
 }
