@@ -1,0 +1,87 @@
+/* GOZA TACOS · branding based on the supplied Instagram logo.
+   Black / orange / white; bold circular emblem. */
+:root{--ink:#101012;--ink2:#232326;--orange:#ff8a18;--darkorange:#db600d;--yellow:#ffa31c;--paper:#f6f6f7;--cream:#fff8ef;--line:#e8e6e4;--green:#149563}
+body{background:var(--paper)}
+.top{background:#101012;border-bottom:3px solid #ff8814}
+.top-inner{min-height:84px}
+.goza-logo-img{width:58px;height:58px;border-radius:50%;object-fit:cover;background:#080808;border:2px solid #fff;box-shadow:0 0 0 2px #ff8a18}
+.brand{gap:14px}
+.brand-text b{font-style:italic;color:#ff8a18;font-family:'Outfit',Arial,sans-serif;font-size:32px;font-weight:900;letter-spacing:-.085em;text-shadow:none}
+.brand-text b span{color:#fff}
+.brand-text small{color:#fff;font-size:9px;letter-spacing:.17em}
+.top .profile{color:#e5e5e5}
+.top .light{color:#fff;border-color:#3b3b3b;background:#222}
+.admin-nav{background:#161618}
+.admin-nav button{color:#c3c0ba}
+.admin-nav button.active{background:#29221d;color:#ffab51;border-color:var(--orange)}
+.admin-nav button:hover{background:#242426;color:#ffbc75}
+.card{border:1px solid #e5e3e1;box-shadow:0 8px 27px #1812100a}
+.heading .eyebrow,.eyebrow{color:#da630e}
+.heading h1{color:#121212}
+.primary,.small-primary{background:#f78316;color:#141414;font-weight:900}
+.primary:hover,.small-primary:hover{background:#ffa12b}
+.kpi{border-top:4px solid #f8871b}
+.kpi-icon{color:#e86f11;background:#fff1e3}
+.counter,.goza-legal{background:#fff0dc;color:#a84705;border-radius:100px;padding:7px 12px;font-size:10px;font-weight:900;white-space:nowrap}
+.employee-hero{background:radial-gradient(circle at 92% 0%,#623413 0,#27201a 35%,#0c0c0d 100%);border:2px solid #ff8a18;box-shadow:0 14px 50px #29160824}
+.employee-hero:after{content:"GOZA";font-size:200px;right:-50px;top:-30px;transform:rotate(-14deg);font-style:italic;opacity:.065}
+.employee-hero .eyebrow{color:#ffa843}
+.employee-hero .primary.giant{background:#f88a1d;color:#0e0e0e;border:2px solid #ffaf4c;box-shadow:0 6px 0 #bd4e08}
+.employee-hero .primary.giant:hover{background:#ffa93d}
+.employee-hero .outline.giant{border-color:#ff8a18;background:#161616;color:#fff}
+.employee-hero .live-clock{color:#fff}
+.login-wrap{background:#fff}
+.login-visual{background:radial-gradient(ellipse at 65% 40%,#3e261a,#111 65%);border-right:5px solid #ff8a18}
+.login-visual .brand-text b{color:#ff8a18}
+.login-visual .brand-text small{color:#fff}
+.login-head{font-style:italic}
+.login-head em{color:#f78a14}
+.login-side{background:#f6f6f7}
+.login-form{background:#fff;border:1px solid #e8e8e8;border-radius:25px;padding:35px;box-shadow:0 20px 65px #0c0c0c10}
+.login-form h1 .accent{color:#f78316}
+.segment{background:#eee}
+.segment .selected{background:#171717;color:#ffa944}
+.att-week-title{background:#171717;color:#fff}
+.att-shift{border-top:3px solid #f58419}
+.att-calendar-head .eyebrow{color:#c85a0c}
+.att-alert-item,.warning-row{border-left:4px solid #f18415}
+.att-badge.att-late,.att-badge.att-early,.att-badge.att-absent,.att-badge.att-missing{background:#ffe4df;color:#a53222}
+.att-badge.att-approved,.att-badge.att-justified,.att-badge.att-done{background:#e1f6e8;color:#167744}
+.att-badge.att-extra{background:#fff0d3;color:#a55b10}
+.attendance-card .card{border-radius:18px}
+.goza-help{font-size:13px;color:#777;line-height:1.6}
+.goza-manual-form{display:grid;grid-template-columns:1fr 1fr;gap:13px;align-items:end}
+.goza-manual-form label{font-size:12px;font-weight:800;color:#515050;display:block}
+.goza-manual-form :is(input,select,textarea),.goza-audit-toolbar select{width:100%;display:block;background:#f9f9f9;border:1px solid #ddd;border-radius:12px;margin-top:7px;padding:12px 13px;min-width:0;color:#1a1a1a}
+.goza-manual-form textarea{min-height:85px;resize:vertical}
+.goza-span2{grid-column:1/-1}
+.goza-manual-form button{justify-self:start;grid-column:1/-1}
+.goza-manual-card{border-left:5px solid #f78718}
+.goza-role-row{display:flex;align-items:center;flex-wrap:wrap;gap:12px;padding:14px 0;border-bottom:1px solid #eaeaea}
+.goza-role-row>div{flex:1}
+.goza-role-row b,.goza-role-row small{display:block}
+.goza-role-row small{color:#8b8b8b;font-size:11px;margin-top:3px}
+.goza-modal-shell{position:fixed;z-index:1000;inset:0;display:grid;place-items:center;padding:14px}
+.goza-modal-mask{position:absolute;inset:0;background:#000b}
+.goza-dialog{position:relative;z-index:1;background:#fff;padding:28px;border-radius:23px;max-width:600px;width:100%;max-height:90vh;overflow:auto;box-shadow:0 30px 90px #0005}
+.goza-audit-toolbar{display:flex;justify-content:space-between;gap:15px;align-items:end;margin-bottom:22px;flex-wrap:wrap}
+.goza-audit-toolbar label{font-size:12px;font-weight:800;flex:1;min-width:200px}
+.goza-audit-data{font-size:11px;max-width:330px;white-space:pre-wrap;overflow-wrap:anywhere;background:#f5f5f5;border-radius:7px;padding:10px}
+.goza-legal{font-size:10px}
+.goza-team-tags{display:flex;gap:6px;align-items:center}
+.goza-supervisor-note{font-size:11px;color:#666}
+.goza-hero-logo{width:115px;height:115px;display:block;margin:8px 0 12px;border:3px solid #ff8814;border-radius:50%}
+@media(max-width:640px){
+ .goza-logo-img{width:44px;height:44px}
+ .top-inner{min-height:70px}
+ .brand-text b{font-size:26px}
+ .brand-text small{font-size:7px}
+ .login-form{border:0;padding:10px;box-shadow:none}
+ .goza-manual-form{grid-template-columns:1fr}
+ .goza-span2{grid-column:1}
+ .goza-manual-form button{grid-column:1;width:100%}
+ .goza-dialog{padding:19px}
+ .top .brand-text small{letter-spacing:.1em}
+ .admin-nav button{font-size:11px}
+ .employee-hero .goza-hero-logo{width:85px;height:85px}
+}
