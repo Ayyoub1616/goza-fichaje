@@ -27,9 +27,11 @@ export function attendanceStatus(plan,actual,nowTime=Date.now(),grace=5){
  if(actual){
   const late=minutes(actual.started_at,plan.starts_at);
   const exit=actual.ended_at?minutes(actual.ended_at,plan.ends_at):null;
+  if(late>grace&&exit!==null&&exit < -grace)return {key:"late-early",label:"Entrada "+late+" min tarde y salida "+Math.abs(exit)+" min antes",severity:2,late,exit};
+  if(late>grace&&exit!==null&&exit > grace)return {key:"late-extra",label:"Entrada "+late+" min tarde y salida "+exit+" min después",severity:2,late,exit};
   if(late>grace)return {key:"late",label:"Entrada "+late+" min tarde",severity:2,late};
   if(exit!==null&&exit < -grace)return {key:"early",label:"Salida "+Math.abs(exit)+" min antes",severity:2,exit};
-  if(exit!==null&&exit > grace)return {key:"extra",label:"Salida "+exit+" min después",severity:1,exit};
+  if(exit!==null&&exit > grace)return {key:"extra",label:"Salida "+exit+" min después",severity:2,exit};
   return {key:actual.ended_at?"done":"working",label:actual.ended_at?"Completado":"En curso",severity:0};
  }
  const start=new Date(plan.starts_at).getTime(),end=new Date(plan.ends_at).getTime();
@@ -81,7 +83,7 @@ export class AttendanceModule{
  employeeWidget(){
   const mine=this.myPlans(),today=localDay(new Date()),coming=mine.filter(p=>p.work_date>=plusDays(today,-1)&&p.work_date<=plusDays(today,9)).sort((a,b)=>a.starts_at.localeCompare(b.starts_at));
   const warnings=mine.filter(p=>p.work_date>=plusDays(today,-7)&&p.work_date<=today)
-   .map(p=>({p,s:this.status(p)})).filter(x=>["late","early","missing","absent"].includes(x.s.key));
+   .map(p=>({p,s:this.status(p)})).filter(x=>["late","early","extra","late-early","late-extra","missing","absent"].includes(x.s.key));
   const requests=this.requests.filter(x=>x.staff_id===this.getMe()?.id);
   return '<section class="card attendance-card"><div class="section-head"><div><div class="eyebrow">MIS TURNOS</div><h2>Horarios asignados</h2></div><span class="hint">Zaragoza · horario oficial</span></div>'+
    (coming.length?'<div class="att-plan-grid">'+coming.map(p=>
@@ -108,7 +110,7 @@ export class AttendanceModule{
    const p=this.plans.find(x=>x.id===b.dataset.attJustify);if(!p)return;
    const why=prompt("Motivo de incidencia del turno "+this.dateTime(p)+" (mínimo 8 caracteres). No incluyas diagnósticos médicos.");
    if(why===null)return;
-   const k=this.status(p).key==="late"?"late":this.status(p).key==="early"?"early_exit":"absence";
+   const k=["late","late-early","late-extra"].includes(this.status(p).key)?"late":["early","extra"].includes(this.status(p).key)?"early_exit":"absence";
    this.perform(async()=>await this.rpc("submit_attendance_request",{
     p_from:p.work_date,p_to:p.work_date,p_kind:k,p_reason:why,p_plan:p.id
    }));
