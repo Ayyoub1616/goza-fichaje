@@ -164,9 +164,12 @@ function renderEmployee(){
  const current=currentShift(),my=shifts.filter(s=>s.staff_id===me.id);
  const today=dateKey(now()),recent=my.filter(s=>dateKey(s.started_at)===today);
  const todayStart=madridMidnight(today),todayEnd=madridMidnight(addDate(today));const todaySecs=my.reduce((n,s)=>n+overlapNet(s,todayStart,todayEnd),0);
+ const lateTodayPlan=attendance.myPlans().find(p=>p.work_date===today&&attendance.getShift(p)&&
+   ["late","late-early","late-extra","early","extra"].includes(attendance.status(p).key));
  layout('<section class="employee-hero"><div class="eyebrow cream">REGISTRO DE JORNADA / '+esc(me.employee_code)+'</div>'+
  '<img class="goza-hero-logo" src="./goza-mark.svg" alt="GOZA TACOS">'+'<h1>Hola, '+esc(me.full_name.split(" ")[0])+'<span class="accent">.</span></h1><p>Tu jornada, en un toque.</p>'+
  '<div class="live-clock" id="liveclock">'+clock(now())+'</div><div class="todaydate">'+esc(dateLong(now()))+'</div><div class="hero-status '+(current?"working":"")+'">● '+(current?state(current):"Fuera de servicio")+'</div>'+
+ (lateTodayPlan?'<div class="goza-arrival-notice"><b>⚠ '+esc(attendance.status(lateTodayPlan).label)+'</b><p>Tu responsable verá esta diferencia. Si deseas explicarla, puedes enviar un comentario.</p><button class="table-btn" data-att-justify="'+lateTodayPlan.id+'">Explicar mi fichaje →</button></div>':"")+
  '<div class="big-actions">'+(!current?'<button data-clock="entry" class="primary giant">▶&nbsp; Fichar entrada</button>':
  '<button data-clock="'+(current.pause_started_at?"break_end":"break_start")+'" class="primary giant">'+(current.pause_started_at?"↻&nbsp; Terminar pausa":"Ⅱ&nbsp; Iniciar pausa")+'</button>'+
  '<button data-clock="exit" class="outline giant">■&nbsp; Fichar salida</button>')+'</div>'+
