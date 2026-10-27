@@ -5,9 +5,9 @@ Web: https://ayyoub1616.github.io/goza-fichaje/
 ## Instalación actual (27/10/2026)
 
 - Proyecto Supabase **GOZA Fichaje**, exclusivo de este restaurante, `cbadexhiekwcxcbivifk` en `eu-west-3` (París).
-- Precio de creación de proyecto: **0 €/mes** según la consulta a Supabase; plan gratuito con límites, sin garantía de copias automáticas.
+- Coste cotizado para el proyecto: **0 USD/mes** según Supabase; plan gratuito con límites, sin garantía de copias automáticas.
 - Esquema SQL instalado con RLS, tablas privadas, RPC transaccionales, auditoría de correcciones y eventos.
-- Edge Functions `manage-staff` (JWT obligatorio) y `setup-admin` (primer propietario protegido por un código de un solo uso) desplegadas.
+- Edge Functions `manage-staff` (JWT obligatorio) y `bootstrap-goza-admin` (activación inicial protegida por código de un solo uso; `setup-admin` antiguo deshabilitado) desplegadas.
 - `config.js` conectado mediante URL y **clave publicable**. No hay claves de servicio ni contraseñas en GitHub.
 - GitHub Pages conectado con publicación automática.
 - **Pendiente:** el titular debe activar su primera cuenta con su propio correo y contraseña. Antes de eso no hay cuentas ni fichajes reales registrados.
@@ -16,11 +16,11 @@ Web: https://ayyoub1616.github.io/goza-fichaje/
 
 Abre: https://ayyoub1616.github.io/goza-fichaje/?setup=1
 
-1. Escribe nombre, correo personal y una contraseña nueva que no hayas reutilizado.
+1. Escribe tu correo personal y una contraseña nueva de al menos 12 caracteres con letras y números.
 2. Copia el código privado de activación facilitado en la conversación con ChatGPT. **El código no está en este repositorio.**
 3. Después entra desde la web principal, elige «Administrador» e inicia sesión con correo y contraseña.
 4. Ve a «Empleados», crea cada trabajador y entrega su código y contraseña provisional de manera privada.
-5. Pide que cada trabajador cambie su contraseña tras el primer acceso.
+5. Pide que cada trabajador cambie su contraseña tras el primer acceso. La función de activación ya no admite crear un segundo administrador.
 
 **Importante:** la activación solo funciona si no hay ningún administrador dado de alta. El código privado jamás debe publicarse en GitHub o redes sociales.
 
