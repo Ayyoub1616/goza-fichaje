@@ -85,3 +85,7 @@ body{background:var(--paper)}
  .admin-nav button{font-size:11px}
  .employee-hero .goza-hero-logo{width:85px;height:85px}
 }
+.goza-alert-btn{background:#2b2017;border:1px solid #e78a34;border-radius:100px;color:#fff;padding:9px 12px;font-size:15px;white-space:nowrap}
+.goza-alert-btn b{display:inline-block;margin-left:4px;padding:2px 7px;border-radius:100px;background:#f48717;color:#171717;font-size:12px}
+.goza-alert-btn:hover{background:#38291d}
+@media(max-width:540px){.goza-alert-btn{padding:7px 8px;font-size:13px}.goza-alert-btn b{font-size:10px}}
