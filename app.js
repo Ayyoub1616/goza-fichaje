@@ -2,7 +2,7 @@ import {createClient} from "https://esm.sh/@supabase/supabase-js@2.57.4";
 const cfg=window.GOZA_CONFIG||{},app=document.getElementById("app"),TZ="Europe/Madrid";
 if(!cfg.supabaseUrl||!cfg.supabasePublishableKey)throw new Error("Falta conexión de GOZA.");
 const db=createClient(cfg.supabaseUrl,cfg.supabasePublishableKey,{auth:{autoRefreshToken:true,persistSession:true}});
-let user=null,me=null,people=[],shifts=[],incidents=[],corrections=[],events=[],page="home",range="month",filterEmployee="all",filterFrom="",filterTo="",loginMode="employee",busy=false,secret=null,refreshing=false;
+let user=null,me=null,people=[],shifts=[],incidents=[],corrections=[],events=[],selectedRecords=null,page="home",range="month",filterEmployee="all",filterFrom="",filterTo="",loginMode="employee",busy=false,secret=null,refreshing=false;
 const $=q=>document.querySelector(q),$$=q=>Array.from(document.querySelectorAll(q));
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const now=()=>new Date(), dateKey=d=>new Intl.DateTimeFormat("sv-SE",{timeZone:TZ,year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date(d));
@@ -39,6 +39,18 @@ const all=async()=>{const [ss,pp,ii,cc]=await Promise.all([
  for(const t of [ss,pp,ii,cc])if(t.error)throw t.error;
  people=ss.data||[];shifts=pp.data||[];incidents=ii.data||[];corrections=cc.data||[];
 };
+async function loadHistoricalRecords(){
+ // Consulta paginada: los 95 días del dashboard no limitan el histórico disponible.
+ const base=filterFrom||dateKey(new Date(Date.now()-95*86400000));
+ const last=filterTo||dateKey(now());
+ const from=madridMidnight(base).toISOString(),to=madridMidnight(addDate(last)).toISOString();
+ if(new Date(from)>new Date(to))throw Error("La fecha inicial debe ser anterior a la final");
+ let records=[];for(let n=0;n<80;n++){
+ const {data,error}=await db.from("shifts").select("*").gte("started_at",from).lt("started_at",to).order("started_at",{ascending:false}).range(n*1000,n*1000+999);
+ if(error)throw error;records.push(...(data||[]));if((data||[]).length<1000)break;
+ }
+ return records;
+}
 async function init(){
  try{
  const {data,error}=await db.auth.getUser();if(error||!data.user){user=null;me=null;return renderLogin()}
@@ -78,6 +90,7 @@ function renderLogin(){
  if(!/^[A-Z0-9-]{3,24}$/.test(identity)){notice("Introduce tu código de empleado.",true);setLoading(false);return}
  identity=identity.toLowerCase()+"@team.goza-fichaje.invalid";
  }
+ if(busy)return;
  const {error}=await db.auth.signInWithPassword({email:identity,password:String(f.get("password"))});
  if(error){notice("Código/correo o contraseña incorrectos.",true);setLoading(false)} else {setLoading(false);await init()}
  };
@@ -168,7 +181,7 @@ function renderTeam(){
 }
 async function manage(body){const r=await db.functions.invoke("manage-staff",{body});if(r.error)throw Error("No se pudo gestionar el empleado. Comprueba la función privada de Supabase.");if(r.data?.error)throw Error(r.data.error);return r.data}
 function renderRecords(){
- let d=shifts.filter(s=>(filterEmployee==="all"||s.staff_id===filterEmployee)&&(!filterFrom||dateKey(s.started_at)>=filterFrom)&&(!filterTo||dateKey(s.started_at)<=filterTo));
+ let d=(selectedRecords||shifts).filter(s=>(filterEmployee==="all"||s.staff_id===filterEmployee)&&(!filterFrom||dateKey(s.started_at)>=filterFrom)&&(!filterTo||dateKey(s.started_at)<=filterTo));
  const by={};d.forEach(s=>{(by[s.staff_id]||=[]).push(s)});
  const agg=Object.entries(by).map(([id,rows])=>({id,secs:rows.reduce((n,s)=>n+netSeconds(s),0),count:rows.length})).sort((a,b)=>b.secs-a.secs);
  layout(heading('Fichajes y horas<span class="accent">.</span>','Historial del equipo, cálculo de horas y exportación a CSV.')+
@@ -182,7 +195,7 @@ function renderRecords(){
  '<div class="table-scroll"><table><thead><tr><th>Fecha</th><th>Empleado</th><th>Antes</th><th>Después</th><th>Motivo</th></tr></thead><tbody>'+
  (corrections.length?corrections.slice(0,30).map(c=>'<tr><td>'+fmt(c.changed_at)+'</td><td>'+esc(staffName(c.staff_id))+'</td><td>'+fmt(c.old_started_at)+' / '+fmt(c.old_ended_at)+'</td><td>'+fmt(c.new_started_at)+' / '+fmt(c.new_ended_at)+'</td><td>'+esc(c.reason)+'</td></tr>').join(""):'<tr><td colspan="5" class="empty">Todavía no hay correcciones.</td></tr>')+
  '</tbody></table></div></section>');
- $("[data-action=filter]").onclick=()=>{filterFrom=$("#from").value;filterTo=$("#to").value;filterEmployee=$("#worker").value;render()};
+ $("[data-action=filter]").onclick=async()=>{filterFrom=$("#from").value;filterTo=$("#to").value;filterEmployee=$("#worker").value;try{selectedRecords=await loadHistoricalRecords();render();notice("Registros consultados desde el servidor")}catch(e){notice(fmtError(e),true)}};
  $("[data-action=export]").onclick=()=>downloadCsv(d);
  $$("[data-correct]").forEach(b=>b.onclick=()=>correctDialog(b.dataset.correct));
 }
@@ -200,7 +213,7 @@ function localMadridToISO(t){
  return matches[0];
 }
 function correctDialog(shiftId){
- const s=shifts.find(x=>x.id===shiftId);if(!s)return;
+ const s=(selectedRecords||shifts).find(x=>x.id===shiftId);if(!s)return;
  const start=prompt("Corregir ENTRADA de "+staffName(s.staff_id)+" (hora Zaragoza: AAAA-MM-DDTHH:MM)",madridFormDate(s.started_at));
  if(start===null)return;
  const end=prompt("Corregir SALIDA (hora Zaragoza: AAAA-MM-DDTHH:MM)",madridFormDate(s.ended_at||now()));
@@ -212,7 +225,7 @@ function correctDialog(shiftId){
  const v=Number(pause);
  if(!Number.isFinite(v)||v<0||reason.trim().length<8)throw Error("Datos inválidos");
  await rpc("correct_shift",{p_id:shiftId,p_start,p_end,p_pause_seconds:Math.round(v*60),p_reason:reason.trim()});
- await all();render();notice("Corrección realizada y registrada en auditoría");
+ await all();if(selectedRecords)selectedRecords=await loadHistoricalRecords();render();notice("Corrección realizada y registrada en auditoría");
  }catch(e){notice(fmtError(e),true)}})();
 }
 function renderIssues(){
