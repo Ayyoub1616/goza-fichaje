@@ -39,18 +39,22 @@ export class GozaManagement{
  }
  manualCard(){
   const employees=this.getPeople().filter(x=>x.role==="employee"||x.role==="manager");
-  const d=isoLocal(new Date().toISOString()).slice(0,10);
+  const d=isoLocal(new Date().toISOString());
   return '<section class="card goza-manual-card"><div class="section-head"><div><div class="eyebrow">GESTIÓN DE FICHAJES</div><h2>Fichar por un empleado</h2></div><span class="goza-legal">Con auditoría</span></div>'+
   '<p class="goza-help">Úsalo cuando alguien haya olvidado fichar. Registra la hora real comunicada, tu identidad y una justificación. No modifica las marcas anteriores.</p>'+
   '<form id="supervisor-add-shift" class="goza-manual-form"><label>Empleado<select name="staff" required>'+employees.map(x=>'<option value="'+x.id+'">'+this.e(x.full_name)+' · '+this.e(x.employee_code)+'</option>').join("")+'</select></label>'+
-  '<label>Entrada real (Zaragoza)<input type="datetime-local" name="start" required value="'+d+'T13:00"></label>'+
-  '<label>Salida real (opcional si sigue trabajando)<input type="datetime-local" name="end" value="'+d+'T17:00"></label>'+
+  '<label>Entrada real (Zaragoza)<input type="datetime-local" name="start" required value="'+d+'"></label>'+
+  '<label>Salida real (opcional si sigue trabajando)<input type="datetime-local" name="end" placeholder="Dejar vacío si la jornada sigue abierta"></label>'+
   '<label>Pausa no trabajada (min)<input type="number" name="pause" value="0" min="0" max="720" step="1" required></label>'+
   '<label class="goza-span2">Motivo de la intervención<textarea name="reason" required minlength="8" maxlength="1000" placeholder="El empleado olvidó registrar la entrada. Turno confirmado por el encargado."></textarea></label>'+
+  '<div class="goza-manual-shortcuts"><button class="light" type="button" data-start-now>Entrada = ahora</button><button class="light" type="button" data-end-now>Salida = ahora</button><button class="light" type="button" data-end-clear>Jornada abierta</button></div>'+
   '<button class="primary" type="submit">+ Registrar fichaje manual</button></form></section>';
  }
  bindManual(){
   const form=document.getElementById("supervisor-add-shift");if(!form)return;
+  form.querySelector("[data-start-now]").onclick=()=>{form.elements.start.value=isoLocal(new Date().toISOString())};
+  form.querySelector("[data-end-now]").onclick=()=>{form.elements.end.value=isoLocal(new Date().toISOString())};
+  form.querySelector("[data-end-clear]").onclick=()=>{form.elements.end.value=""};
   form.onsubmit=ev=>{ev.preventDefault();const f=new FormData(form);const reason=String(f.get("reason")||"").trim();if(reason.length<8)return this.notify("Indica el motivo de la intervención",true);
    this.run(async()=>{
     const start=localMadridToISO(String(f.get("start"))),end=f.get("end")?localMadridToISO(String(f.get("end"))):null;
