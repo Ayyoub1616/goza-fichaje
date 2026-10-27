@@ -38,7 +38,7 @@ Deno.serve(async req=>{
        return reply(400,{error:"Nombre o código no válido (mín. 3 caracteres A-Z, 0-9, guion)"},cors);
      if(weekly!==null&&weekly!==""&&weekly!==undefined&&(!Number.isFinite(Number(weekly))||Number(weekly)<0||Number(weekly)>60))
        return reply(400,{error:"Horas semanales no válidas"},cors);
-     const {count,error:countError}=await admin.from("staff").select("id",{count:"exact",head:true}).eq("active",true).eq("role","employee");
+     const {count,error:countError}=await admin.from("staff").select("id",{count:"exact",head:true}).eq("active",true).neq("role","admin");
      if(countError)throw countError;
      if((count||0)>=10)return reply(409,{error:"Límite de 10 empleados activos"},cors);
      const existing=await admin.from("staff").select("id").eq("employee_code",code).maybeSingle();
@@ -71,7 +71,7 @@ Deno.serve(async req=>{
      }
      const active=Boolean(body.active);
      if(active){
-       const {count}=await admin.from("staff").select("id",{count:"exact",head:true}).eq("active",true).eq("role","employee");
+       const {count}=await admin.from("staff").select("id",{count:"exact",head:true}).eq("active",true).neq("role","admin");
        if((count||0)>=10)return reply(409,{error:"Máximo 10 empleados activos"},cors);
      }
      const upd=await admin.from("staff").update({active}).eq("id",id).neq("role","admin");
