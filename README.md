@@ -52,3 +52,22 @@ El frontend es público por diseño (GitHub Pages); los datos están exclusivame
 ## Identidad visual
 
 Interfaz original en naranja/crema de GOZA. El logotipo del Instagram facilitado por el titular no ha podido verificarse o recuperarse con fiabilidad, por lo que se utiliza una versión tipográfica provisional.
+
+## Mejoras de administración y asistencia (27/10/2026)
+
+- **Administrador principal:** único rol de propietario. Control total del personal, accesos, contraseñas y asignación de encargados. Accede a **Empleados**, **Horarios**, **Asistencia**, **Fichajes**, **Incidencias** y **Auditoría**.
+- **Encargado:** acceso con el código y contraseña de su cuenta personal. Puede consultar horarios y registros, planificar turnos, revisar justificaciones y corregir/crear fichajes, pero no puede dar de alta personal, restablecer contraseñas, asignar permisos ni consultar la auditoría reservada al titular.
+- **Empleado:** fichaje de entrada, comienzo y fin de pausa y salida, así como consulta de turnos y envío de justificaciones de retrasos, salidas anticipadas o fuera de hora, ausencias y citas médicas. No compartir códigos y contraseñas.
+- **Registros manuales:** en **Fichajes** hay una ficha para dar de alta una entrada/salida omitida, con pausas y motivo obligatorio; se conserva autor, fecha de intervención, datos declarados y vínculo con el turno cuando coincide.
+- **Correcciones:** modal con datos anteriores, nuevos y explicación obligatoria. Las revisiones van a `public.corrections` inmutable y `public.admin_audit` con actor, afectado y marca de tiempo.
+- **Auditoría:** registro de modificaciones de horarios, fichajes, permisos, solicitudes e incidencias; incluye CSV para el propietario.
+- **Detección de puntualidad:** avisos con tolerancia visual de 5 minutos, basados en horarios asignados, incluidas jornadas que terminan al día siguiente. Revisar siempre las causas antes de valorar la asistencia.
+- **Diseño:** paleta negro/naranja/blanco y emblema SVG circular inspirado en el logo fotografiado del Instagram de GOZA. Es una reconstrucción, **no una copia vectorial certificada del original**. Se puede sustituir por un archivo de marca de buena resolución.
+
+La campana de notificaciones muestra avisos **dentro de la web mientras se utiliza**. No hay todavía notificaciones push al móvil con la web cerrada, ni envío automático de email/WhatsApp por llegadas tarde.
+
+### Seguridad y comprobaciones
+
+Las políticas de Supabase restringen acceso y los procedimientos de escritura validan en el servidor el rol de cada usuario. Los cambios de rol y fichajes manuales se realizan mediante RPC con operaciones en base de datos; el backend de altas utiliza función privada autenticada. No se almacena una contraseña en el histórico de auditoría. Las cuentas deben tener contraseñas personales; no existe verificación de presencia física, por lo que compartir voluntariamente las claves sigue siendo un riesgo.
+
+Antes del uso oficial: comprobar periodos, convenios, descansos retribuidos, conservación de registros durante cuatro años, backup/recuperación, acceso inspector y aviso de protección de datos a los empleados. Los informes horarios no sustituyen una nómina calculada conforme al convenio.
