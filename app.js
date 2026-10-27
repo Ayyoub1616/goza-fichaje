@@ -283,7 +283,7 @@ async function changePassword(){
 function downloadCsv(data){
  const heads=["Código","Empleado","Entrada UTC","Salida UTC","Pausa segundos","Horas netas","Estado","ID jornada"];
  const rows=[heads,...data.map(s=>[people.find(p=>p.id===s.staff_id)?.employee_code||"",staffName(s.staff_id),s.started_at,s.ended_at||"",s.paused_seconds,(netSeconds(s)/3600).toFixed(4),state(s),s.id])];
- const csv="\ufeff"+rows.map(r=>r.map(x=>'"'+String(x??"").replaceAll('"','""')+'"').join(";")).join("\r\n");
+ const csv="\ufeff"+rows.map(r=>r.map(x=>{let v=String(x??"");if(/^[\s]*[=+@]/.test(v))v="'"+v;return '"'+v.replaceAll('"','""')+'"'}).join(";")).join("\r\n");
  const url=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"})),a=document.createElement("a");
  a.href=url;a.download="goza-fichajes-"+dateKey(now())+".csv";a.click();setTimeout(()=>URL.revokeObjectURL(url),3000);
 }
