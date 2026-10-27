@@ -1,55 +1,50 @@
-# GOZA Fichaje · Control horario para Goza Tacos Franceses (Zaragoza)
+# GOZA Fichaje · Goza Tacos Franceses, Zaragoza
 
-Sitio de pruebas / futura versión real: https://ayyoub1616.github.io/goza-fichaje/
+Web: https://ayyoub1616.github.io/goza-fichaje/
 
-## Estado actual
+## Instalación actual (27/10/2026)
 
-**El frontend privado y el backend SQL están programados; no está activado el fichaje real.**
-Si `config.js` no tiene URL y clave pública de un proyecto Supabase propio, la web sigue mostrando una demostración **sin autenticación, no apta para uso laboral**. La demo guarda datos exclusivamente en el navegador. No introducir fichajes o nombres reales en la demo.
+- Proyecto Supabase **GOZA Fichaje**, exclusivo de este restaurante, `cbadexhiekwcxcbivifk` en `eu-west-3` (París).
+- Precio de creación de proyecto: **0 €/mes** según la consulta a Supabase; plan gratuito con límites, sin garantía de copias automáticas.
+- Esquema SQL instalado con RLS, tablas privadas, RPC transaccionales, auditoría de correcciones y eventos.
+- Edge Functions `manage-staff` (JWT obligatorio) y `setup-admin` (primer propietario protegido por un código de un solo uso) desplegadas.
+- `config.js` conectado mediante URL y **clave publicable**. No hay claves de servicio ni contraseñas en GitHub.
+- GitHub Pages conectado con publicación automática.
+- **Pendiente:** el titular debe activar su primera cuenta con su propio correo y contraseña. Antes de eso no hay cuentas ni fichajes reales registrados.
 
-## Funciones desarrolladas para la versión real
+## Activación inicial de administrador
 
-- Acceso con contraseña individual y código de empleado. No se puede seleccionar un compañero por su nombre.
-- Administrador con correo y contraseña propios; solo el administrador crea empleados y genera/restablece credenciales.
-- Alta, baja lógica, cambio de contraseña, objetivo semanal opcional y límite de 10 empleados activos.
-- Fichajes de entrada, pausa, fin de pausa y salida; jornadas partidas y turnos nocturnos.
-- Fecha/hora del servidor en UTC, interfaz en Europe/Madrid. Transacciones atómicas y bloqueo de jornadas abiertas duplicadas.
-- Resumen de jornadas abiertas, horas hoy/semana, incidencias y avisos de descanso inferior a 12 horas o jornada abierta más de 12 horas.
-- Informes filtrables, paginación histórica, CSV y correcciones con motivo y auditoría inmutable.
-- Datos guardados en Supabase Postgres con RLS; empleados solo pueden ver sus propios datos.
-- La Edge Function `supabase/functions/manage-staff/index.ts` utiliza credenciales de servidor **solo en el entorno privado**.
+Abre: https://ayyoub1616.github.io/goza-fichaje/?setup=1
 
-## Pasos obligatorios para activar el fichaje real
+1. Escribe nombre, correo personal y una contraseña nueva que no hayas reutilizado.
+2. Copia el código privado de activación facilitado en la conversación con ChatGPT. **El código no está en este repositorio.**
+3. Después entra desde la web principal, elige «Administrador» e inicia sesión con correo y contraseña.
+4. Ve a «Empleados», crea cada trabajador y entrega su código y contraseña provisional de manera privada.
+5. Pide que cada trabajador cambie su contraseña tras el primer acceso.
 
-1. Crear un **proyecto Supabase independiente** para GOZA en una organización seleccionada expresamente por el propietario (preferible región UE). Confirmar cualquier coste antes de crearlo.
-2. Ejecutar `schema.sql` como migración de esquema en el proyecto GOZA. **No ejecutarlo en otros proyectos existentes.**
-3. En Supabase Authentication, configurar que no existan nuevos registros públicos (**Disable signup**); añadir una cuenta de administrador con un correo tuyo verificable y contraseña elegida por ti en un canal privado (no compartas contraseñas en GitHub ni aquí).
-4. Desde Authentication > Users, copiar el UUID del usuario que acabas de crear y registrar solo ese UUID como administrador:
-   ```sql
-   insert into public.staff(user_id, employee_code, full_name, role)
-   values ('UUID_DEL_ADMIN', 'GOZA-ADMIN', 'Administrador GOZA', 'admin');
-   ```
-5. Desplegar Edge Function `manage-staff` con validación JWT activada. Configurar el servicio para que use secretos de Supabase disponibles **solo en el servidor**. No publicar service role ni contraseñas.
-6. Configurar `config.js` con URL y `publishable key` reales del proyecto GOZA (estas dos son públicas por diseño; las políticas RLS son obligatorias):
-   ```js
-   window.GOZA_CONFIG = {supabaseUrl: 'https://TU-PROYECTO.supabase.co',supabasePublishableKey: 'TU_CLAVE_PUBLICABLE'};
-   ```
-7. Verificar 2 teléfonos, inicio/fin de jornada, doble clic, entrada de noche y salida a día siguiente, acceso a historial, edición auditada y restablecimiento de clave.
-8. Configurar **copias de seguridad externas periódicas**, prueba de restauración, control de acceso e información de protección de datos; garantizar 4 años de conservación conforme a la norma española. Supabase gratis no garantiza automáticamente esta conservación.
+**Importante:** la activación solo funciona si no hay ningún administrador dado de alta. El código privado jamás debe publicarse en GitHub o redes sociales.
 
-## Seguridad / notas de uso
+## Qué permite
 
-- Prohibidos códigos PIN idénticos a número de empleado; se generan contraseñas aleatorias robustas y se muestran una sola vez al administrador.
-- El trabajador puede cambiar su contraseña. La desactivación de su perfil impide consultas y fichajes aunque conserve una sesión abierta.
-- Las credenciales no se guardan en localStorage de la demo ni en la tabla de empleados.
-- Las correcciones requieren motivo y dejan auditada la versión original. Nunca borrar eventos de fichaje.
-- Compartir voluntariamente la contraseña sigue siendo posible: para verificar presencia física pueden estudiarse medidas adicionales proporcionadas y compatibles con RGPD, pero no se ha implementado vigilancia ni geolocalización.
-- El descanso descontado del tiempo efectivo depende del convenio/acuerdo aplicable; comprobarlo antes de usar los informes para nóminas.
-- La media temporal de los KPI cuando un turno cruza medianoche reparte la pausa proporcionalmente; se presenta como **estimación**, no como liquidación salarial automática.
-- Diseño visual propio de GOZA (tipográfico provisional). El logo oficial de Instagram no se ha podido obtener y verificar.
+- Empleados: iniciar/cerrar jornada, comenzar/terminar pausa, revisar historial y enviar incidencias.
+- Administrador: altas, desactivaciones, regenerar credenciales, jornadas abiertas, KPIs de horas, incidencias, filtros, CSV y correcciones con motivo.
+- Se conservan horas en UTC (servidor), visualización Europe/Madrid, bloqueo de doble fichaje y eventos de fichaje inmutables.
+- Acceso restringido por usuario con **Row Level Security**. El código de empleado no equivale a contraseña.
+- Turnos de noche o partidos. Los KPI son estimaciones: determinar si una pausa es retribuida o tiempo efectivo según convenio.
 
-## GitHub Pages
+## Uso responsable antes de adoptar como registro laboral oficial
 
-La publicación usa `.github/workflows/pages.yml`, valida JavaScript y publica solo los archivos estáticos incluidos en `dist`. Los archivos de base de datos y de funciones servidor no se suben como recursos de la web pública.
+1. Probar en **dos móviles distintos**: administrador y empleado; entrada/pausa/salida, doble pulsación, nocturnos y conexión intermitente.
+2. Establecer política de correcciones, acceso de trabajadores y acreditación ante Inspección de Trabajo.
+3. Implementar **copias de seguridad externas** periódicas y comprobar recuperación. La base gratuita puede suspenderse por inactividad y el plan no asegura conservación durante cuatro años.
+4. Restringir el registro libre en Authentication y revisar políticas de contraseñas/MFA para administrador en Supabase.
+5. Configurar RGPD (información al personal, encargado de tratamiento, minimización, retención, acceso y eliminación al expirar el plazo legal).
+6. Antes de usar para nóminas o cotizaciones, auditar cálculo de pausas y reglas del convenio correspondiente. No usar los datos de demostración.
 
-Desarrollo responsable de un sistema de registro horario requiere verificación funcional y asesoramiento laboral antes de producción.
+## Seguridad
+
+El frontend es público por diseño (GitHub Pages); los datos están exclusivamente en Supabase bajo RLS. No almacenar secretos en `config.js`, `app.js`, `schema.sql` o un repositorio público. Los empleados reciben credenciales individuales; no se puede fichar simplemente seleccionando un nombre, pero compartir voluntariamente credenciales sigue siendo un riesgo residual.
+
+## Identidad visual
+
+Interfaz original en naranja/crema de GOZA. El logotipo del Instagram facilitado por el titular no ha podido verificarse o recuperarse con fiabilidad, por lo que se utiliza una versión tipográfica provisional.
