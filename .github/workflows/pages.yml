@@ -18,25 +18,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Validar JavaScript y evitar claves privadas
+      - name: Publicar únicamente el aviso temporal
         run: |
-          node --check app.js
-          node --check demo.js
-          node --check bootstrap.js
-          node --check activate.js
-          node --check attendance.mjs
-          node --check management.mjs
-          node --test tests/attendance.test.mjs
-          node tests/login-smoke.cjs
-          if grep -Ei 'service_role|sb_secret_|postgres://' config.js; then
-            echo 'No se pueden publicar secretos en config.js'
-            exit 1
-          fi
-      - name: Empaquetar únicamente el frontend público
-        run: |
+          set -euo pipefail
+          test -s maintenance.html
+          grep -q 'Primero' maintenance.html
           mkdir -p dist
-          cp index.html app.js styles.css demo.js demo.css config.js bootstrap.js activate.html activate.js attendance.mjs attendance.css management.mjs goza-brand.css goza-mark.svg favicon.svg dist/
-          printf 'Publicada solo la web; SQL y código de servidor quedan fuera.\n'
+          cp maintenance.html dist/index.html
+          cp maintenance.html dist/404.html
+          touch dist/.nojekyll
+          echo "Se publica únicamente el aviso de cierre temporal; no se distribuye el código de la aplicación."
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
         with:
